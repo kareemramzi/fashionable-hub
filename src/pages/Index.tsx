@@ -19,7 +19,7 @@ const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [currentView, setCurrentView] = useState<string>("home");
-  const [previousView, setPreviousView] = useState<string>("home");
+  const [navigationHistory, setNavigationHistory] = useState<string[]>(["home"]);
   const [skinData, setSkinData] = useState<{skinTone: string; palette: string[]} | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [showSignUp, setShowSignUp] = useState(false);
@@ -27,15 +27,30 @@ const Index = () => {
   const [userHasSavedAnalysis, setUserHasSavedAnalysis] = useState(false);
   const { toast } = useToast();
 
-  // Function to handle view changes and track previous view
+  // Function to handle view changes and track navigation history
   const changeView = (newView: string) => {
-    setPreviousView(currentView);
-    setCurrentView(newView);
+    if (newView !== currentView) {
+      setNavigationHistory(prev => [...prev, newView]);
+      setCurrentView(newView);
+    }
   };
 
-  // Function to go back to previous view
+  // Function to go back through navigation history
   const goBack = () => {
-    setCurrentView(previousView);
+    if (navigationHistory.length > 1) {
+      const newHistory = [...navigationHistory];
+      newHistory.pop(); // Remove current view
+      const previousView = newHistory[newHistory.length - 1]; // Get the previous view
+      
+      setNavigationHistory(newHistory);
+      setCurrentView(previousView);
+    }
+  };
+
+  // Function to reset navigation history (used for sign out and special cases)
+  const resetNavigationHistory = (initialView: string = "home") => {
+    setNavigationHistory([initialView]);
+    setCurrentView(initialView);
   };
 
   useEffect(() => {
@@ -145,7 +160,7 @@ const Index = () => {
   };
 
   const handleSuccessfulAuth = () => {
-    changeView("home");
+    resetNavigationHistory("home");
     setShowSignUp(false);
     
     // If guest had analysis data, save it for the new user
@@ -174,7 +189,7 @@ const Index = () => {
     setUserHasSavedAnalysis(false);
     setGuestSkinData(null);
     setSelectedStyle(null);
-    changeView("home");
+    resetNavigationHistory("home");
   };
 
   const handleUpdateAnalysis = () => {
