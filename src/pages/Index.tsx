@@ -19,12 +19,24 @@ const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [currentView, setCurrentView] = useState<string>("home");
+  const [previousView, setPreviousView] = useState<string>("home");
   const [skinData, setSkinData] = useState<{skinTone: string; palette: string[]} | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [showSignUp, setShowSignUp] = useState(false);
   const [guestSkinData, setGuestSkinData] = useState<{skinTone: string; palette: string[]} | null>(null);
   const [userHasSavedAnalysis, setUserHasSavedAnalysis] = useState(false);
   const { toast } = useToast();
+
+  // Function to handle view changes and track previous view
+  const changeView = (newView: string) => {
+    setPreviousView(currentView);
+    setCurrentView(newView);
+  };
+
+  // Function to go back to previous view
+  const goBack = () => {
+    setCurrentView(previousView);
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -116,12 +128,12 @@ const Index = () => {
       });
     }
     
-    setCurrentView("styleSelector");
+    changeView("styleSelector");
   };
 
   const handleStyleSelected = (style: string) => {
     setSelectedStyle(style);
-    setCurrentView("recommendations");
+    changeView("recommendations");
   };
 
   const handleSignUp = () => {
@@ -133,7 +145,7 @@ const Index = () => {
   };
 
   const handleSuccessfulAuth = () => {
-    setCurrentView("home");
+    changeView("home");
     setShowSignUp(false);
     
     // If guest had analysis data, save it for the new user
@@ -162,18 +174,18 @@ const Index = () => {
     setUserHasSavedAnalysis(false);
     setGuestSkinData(null);
     setSelectedStyle(null);
-    setCurrentView("home");
+    changeView("home");
   };
 
   const handleUpdateAnalysis = () => {
-    setCurrentView("skinAnalysis");
+    changeView("skinAnalysis");
   };
 
   const handleProfileNavigation = () => {
     if (!user) {
       setShowSignUp(false); // Show sign-in form
     } else {
-      setCurrentView("profile");
+      changeView("profile");
     }
   };
 
@@ -204,9 +216,9 @@ const Index = () => {
         return (
           <SkinAnalysis
             onAnalysisComplete={handleAnalysisComplete}
-            onBack={() => setCurrentView("home")}
-            onFavorites={() => setCurrentView("favorites")}
-            onCart={() => setCurrentView("cart")}
+            onBack={goBack}
+            onFavorites={() => changeView("favorites")}
+            onCart={() => changeView("cart")}
             onProfile={handleProfileNavigation}
           />
         );
@@ -216,7 +228,7 @@ const Index = () => {
             skinTone={currentSkinData?.skinTone || ""}
             colorPalette={currentSkinData?.palette || []}
             onStyleSelected={handleStyleSelected}
-            onBack={() => setCurrentView("home")}
+            onBack={goBack}
           />
         );
       case "recommendations":
@@ -224,9 +236,9 @@ const Index = () => {
           <ShoppingRecommendations
             skinTone={currentSkinData?.skinTone || ""}
             colorPalette={currentSkinData?.palette || []}
-            onBack={() => setCurrentView("home")}
-            onFavorites={() => setCurrentView("favorites")}
-            onCart={() => setCurrentView("cart")}
+            onBack={goBack}
+            onFavorites={() => changeView("favorites")}
+            onCart={() => changeView("cart")}
             onProfile={handleProfileNavigation}
           />
         );
@@ -235,9 +247,9 @@ const Index = () => {
           <OutfitSelector
             skinTone={currentSkinData?.skinTone || ""}
             colorPalette={currentSkinData?.palette || []}
-            onOutfitSelected={(outfitType: string) => setCurrentView("wardrobeManager")}
-            onBack={() => setCurrentView("home")}
-            onFavorites={() => setCurrentView("favorites")}
+            onOutfitSelected={(outfitType: string) => changeView("wardrobeManager")}
+            onBack={goBack}
+            onFavorites={() => changeView("favorites")}
             onProfile={handleProfileNavigation}
           />
         );
@@ -250,32 +262,32 @@ const Index = () => {
               selectedOutfitType: "casual",
               wardrobe: []
             }}
-            onProceedToShopping={() => setCurrentView("recommendations")}
-            onBack={() => setCurrentView("home")}
+            onProceedToShopping={() => changeView("recommendations")}
+            onBack={goBack}
             onProfile={handleProfileNavigation}
           />
         );
       case "favorites":
         return (
           <FavoritesList
-            onBack={() => setCurrentView("home")}
-            onCart={() => setCurrentView("cart")}
+            onBack={goBack}
+            onCart={() => changeView("cart")}
             onProfile={handleProfileNavigation}
           />
         );
       case "cart":
         return (
           <ShoppingCart
-            onBack={() => setCurrentView("home")}
+            onBack={goBack}
             onCheckout={handleCheckout}
-            onFavorites={() => setCurrentView("favorites")}
+            onFavorites={() => changeView("favorites")}
             onProfile={handleProfileNavigation}
           />
         );
       case "profile":
         return (
           <UserProfile
-            onBack={() => setCurrentView("home")}
+            onBack={goBack}
             onSignOut={handleSignOut}
             onUpdateAnalysis={handleUpdateAnalysis}
           />
@@ -294,7 +306,7 @@ const Index = () => {
               <div className="grid gap-4">
                 {shouldShowAnalysisOption ? (
                   <div
-                    onClick={() => currentSkinData ? setCurrentView("styleSelector") : setCurrentView("skinAnalysis")}
+                    onClick={() => currentSkinData ? changeView("styleSelector") : changeView("skinAnalysis")}
                     className="bg-white/80 backdrop-blur-lg p-6 rounded-xl shadow-xl border border-white/30 cursor-pointer hover:scale-105 transition-all duration-300"
                   >
                     <h2 className="text-xl font-bold text-purple-800 mb-2">
@@ -344,7 +356,7 @@ const Index = () => {
                     )}
                     <div className="flex gap-2">
                       <button
-                        onClick={() => setCurrentView("styleSelector")}
+                        onClick={() => changeView("styleSelector")}
                         className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors"
                       >
                         Get Recommendations
@@ -360,7 +372,7 @@ const Index = () => {
                 )}
 
                 <div
-                  onClick={() => setCurrentView("outfitSelector")}
+                  onClick={() => changeView("outfitSelector")}
                   className="bg-white/80 backdrop-blur-lg p-6 rounded-xl shadow-xl border border-white/30 cursor-pointer hover:scale-105 transition-all duration-300"
                 >
                   <h2 className="text-xl font-bold text-purple-800 mb-2">👗 Style Assistant</h2>
@@ -368,7 +380,7 @@ const Index = () => {
                 </div>
 
                 <div
-                  onClick={() => setCurrentView("wardrobeManager")}
+                  onClick={() => changeView("wardrobeManager")}
                   className="bg-white/80 backdrop-blur-lg p-6 rounded-xl shadow-xl border border-white/30 cursor-pointer hover:scale-105 transition-all duration-300"
                 >
                   <h2 className="text-xl font-bold text-purple-800 mb-2">👚 My Wardrobe</h2>
@@ -401,11 +413,11 @@ const Index = () => {
       {renderCurrentView()}
       <BottomNavBar
         currentPage={currentView}
-        onHome={() => setCurrentView("home")}
-        onFavorites={() => setCurrentView("favorites")}
-        onCart={() => setCurrentView("cart")}
+        onHome={() => changeView("home")}
+        onFavorites={() => changeView("favorites")}
+        onCart={() => changeView("cart")}
         onProfile={handleProfileNavigation}
-        onShopping={() => setCurrentView("recommendations")}
+        onShopping={() => changeView("recommendations")}
       />
     </div>
   );
