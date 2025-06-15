@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -114,6 +113,8 @@ const Index = () => {
         return (
           <ShoppingCartComponent 
             onBack={() => setCurrentScreen('home')}
+            onFavorites={() => setCurrentScreen('favorites')}
+            onProfile={() => setCurrentScreen('profile')}
             onCheckout={(items, total) => {
               toast({
                 title: "Checkout initiated",
@@ -126,6 +127,8 @@ const Index = () => {
         return (
           <FavoritesList 
             onBack={() => setCurrentScreen('home')}
+            onCart={() => setCurrentScreen('cart')}
+            onProfile={() => setCurrentScreen('profile')}
           />
         );
       case 'skin-analysis':
@@ -136,6 +139,9 @@ const Index = () => {
               setCurrentScreen('outfit-selector');
             }}
             onBack={() => setCurrentScreen('home')}
+            onFavorites={() => setCurrentScreen('favorites')}
+            onCart={() => setCurrentScreen('cart')}
+            onProfile={() => setCurrentScreen('profile')}
           />
         );
       case 'outfit-selector':

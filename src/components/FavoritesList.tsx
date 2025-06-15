@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Heart, ShoppingCart, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import TopNavBar from "./navigation/TopNavBar";
 
 interface FavoriteItem {
   id: string;
@@ -18,9 +18,11 @@ interface FavoriteItem {
 
 interface FavoritesListProps {
   onBack: () => void;
+  onCart: () => void;
+  onProfile: () => void;
 }
 
-const FavoritesList = ({ onBack }: FavoritesListProps) => {
+const FavoritesList = ({ onBack, onCart, onProfile }: FavoritesListProps) => {
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -123,15 +125,17 @@ const FavoritesList = ({ onBack }: FavoritesListProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4">
-      <div className="max-w-md mx-auto space-y-6">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="text-2xl font-bold text-gray-800">My Favorites</h1>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
+      <TopNavBar 
+        onBack={onBack}
+        onFavorites={() => {}} // Already on favorites page
+        onCart={onCart}
+        onProfile={onProfile}
+        showBackButton={true}
+        title="My Favorites"
+      />
 
+      <div className="max-w-md mx-auto p-4 space-y-6">
         {favorites.length === 0 ? (
           <Card className="shadow-lg">
             <CardContent className="p-8 text-center">

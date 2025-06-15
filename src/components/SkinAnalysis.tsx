@@ -1,167 +1,170 @@
-
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Camera, ArrowLeft, Upload, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { Camera, Upload, Sparkles } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import SkinAnalysisResults from "./SkinAnalysisResults";
+import TopNavBar from "./navigation/TopNavBar";
 
 interface SkinAnalysisProps {
   onAnalysisComplete: (skinTone: string, palette: string[]) => void;
   onBack: () => void;
+  onFavorites: () => void;
+  onCart: () => void;
+  onProfile: () => void;
 }
 
-const SkinAnalysis = ({ onAnalysisComplete, onBack }: SkinAnalysisProps) => {
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+const SkinAnalysis = ({ onAnalysisComplete, onBack, onFavorites, onCart, onProfile }: SkinAnalysisProps) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [showResults, setShowResults] = useState(false);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [analysisResults, setAnalysisResults] = useState<{
     skinTone: string;
-    palette: string[];
+    colorPalette: string[];
   } | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
-  const handleImageCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setCapturedImage(e.target?.result as string);
+        const imageUrl = e.target?.result as string;
+        setUploadedImage(imageUrl);
+        analyzeImage(imageUrl);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const analyzeSkinTone = async () => {
-    if (!capturedImage) return;
-    
+  const analyzeImage = async (imageUrl: string) => {
     setIsAnalyzing(true);
     
-    // Simulate skin tone analysis (in a real app, this would use AI/ML)
+    // Simulate AI analysis
     await new Promise(resolve => setTimeout(resolve, 3000));
     
-    // Mock analysis results
-    const skinTones = ['Fair', 'Light', 'Medium', 'Olive', 'Dark', 'Deep'];
-    const randomSkinTone = skinTones[Math.floor(Math.random() * skinTones.length)];
+    // Mock analysis results based on common skin tone categories
+    const skinTones = [
+      { name: "Light Cool", colors: ["#E8F4F8", "#D1E7DD", "#F8E8FF", "#E1F5FE"] },
+      { name: "Light Warm", colors: ["#FFF8E1", "#FFECB3", "#FFE0B2", "#FFCC80"] },
+      { name: "Medium Cool", colors: ["#E3F2FD", "#F3E5F5", "#E8F5E8", "#FFF3E0"] },
+      { name: "Medium Warm", colors: ["#FFF3C4", "#FFCC02", "#FF8A65", "#FFAB40"] },
+      { name: "Deep Cool", colors: ["#1A237E", "#4A148C", "#B71C1C", "#1B5E20"] },
+      { name: "Deep Warm", colors: ["#BF360C", "#E65100", "#FF6F00", "#F57F17"] }
+    ];
     
-    const colorPalettes = {
-      'Fair': ['#E8D5C4', '#F4E4D6', '#D4A574', '#8B4513', '#4A4A4A'],
-      'Light': ['#F5DEB3', '#DEB887', '#CD853F', '#A0522D', '#2F4F4F'],
-      'Medium': ['#D2B48C', '#BC9A6A', '#8B7355', '#654321', '#191970'],
-      'Olive': ['#C4A484', '#A0836D', '#7D6D61', '#5D4E37', '#8B0000'],
-      'Dark': ['#8B4513', '#7B3F00', '#654321', '#4A4A4A', '#FF6347'],
-      'Deep': ['#654321', '#5D4E37', '#4A4A4A', '#2F2F2F', '#8B008B']
+    const randomTone = skinTones[Math.floor(Math.random() * skinTones.length)];
+    
+    const results = {
+      skinTone: randomTone.name,
+      colorPalette: randomTone.colors
     };
     
-    const palette = colorPalettes[randomSkinTone as keyof typeof colorPalettes] || colorPalettes.Medium;
-    
-    setAnalysisResults({ skinTone: randomSkinTone, palette });
+    setAnalysisResults(results);
     setIsAnalyzing(false);
-    setShowResults(true);
-    toast.success(`Skin tone analyzed: ${randomSkinTone}`);
+    
+    toast({
+      title: "Analysis Complete! ✨",
+      description: `Your skin tone is ${results.skinTone}. Perfect colors selected for you!`,
+    });
   };
 
   const handleContinue = () => {
     if (analysisResults) {
-      onAnalysisComplete(analysisResults.skinTone, analysisResults.palette);
+      onAnalysisComplete(analysisResults.skinTone, analysisResults.colorPalette);
     }
   };
 
-  if (showResults && analysisResults && capturedImage) {
+  if (analysisResults && uploadedImage) {
     return (
-      <SkinAnalysisResults
-        onBack={() => setShowResults(false)}
-        onContinue={handleContinue}
-        skinTone={analysisResults.skinTone}
-        colorPalette={analysisResults.palette}
-        capturedImage={capturedImage}
-      />
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
+        <TopNavBar 
+          onBack={onBack}
+          onFavorites={onFavorites}
+          onCart={onCart}
+          onProfile={onProfile}
+          showBackButton={true}
+          title="Skin Analysis"
+        />
+        <SkinAnalysisResults
+          uploadedImage={uploadedImage}
+          analysisResults={analysisResults}
+          onContinue={handleContinue}
+          onRetake={() => {
+            setUploadedImage(null);
+            setAnalysisResults(null);
+          }}
+        />
+      </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4">
-      <div className="max-w-md mx-auto space-y-6">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="text-2xl font-bold text-gray-800">Skin Tone Analysis</h1>
-        </div>
-
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Camera className="w-5 h-5 text-purple-600" />
-              Capture Your Photo
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
+      <TopNavBar 
+        onBack={onBack}
+        onFavorites={onFavorites}
+        onCart={onCart}
+        onProfile={onProfile}
+        showBackButton={true}
+        title="Skin Analysis"
+      />
+      
+      <div className="max-w-md mx-auto p-4 space-y-6">
+        <Card className="shadow-xl bg-white/80 backdrop-blur-lg border border-white/30">
+          <CardHeader className="text-center">
+            <CardTitle className="flex items-center justify-center gap-3">
+              <Camera className="w-8 h-8 text-purple-600" />
+              <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                Discover Your Glow
+              </span>
             </CardTitle>
+            <p className="text-gray-600">Upload a clear photo of your face in natural lighting</p>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {!capturedImage ? (
-              <div className="space-y-4">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                  <Camera className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                  <p className="text-gray-600 mb-4">Take a clear photo of your face in natural lighting</p>
-                  <Button 
-                    onClick={() => fileInputRef.current?.click()}
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload Photo
-                  </Button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    capture="user"
-                    onChange={handleImageCapture}
-                    className="hidden"
-                  />
+          <CardContent className="space-y-6">
+            <div className="text-center">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                id="image-upload"
+              />
+              <label
+                htmlFor="image-upload"
+                className="inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-4 rounded-xl font-bold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer"
+              >
+                <Upload className="w-6 h-6" />
+                Take or Upload Photo
+              </label>
+            </div>
+
+            {isAnalyzing && (
+              <div className="text-center space-y-4">
+                <div className="relative mx-auto w-20 h-20">
+                  <div className="absolute inset-0 rounded-full border-4 border-purple-200"></div>
+                  <div className="absolute inset-0 rounded-full border-4 border-purple-600 border-t-transparent animate-spin"></div>
+                  <Sparkles className="absolute inset-0 m-auto w-8 h-8 text-purple-600 animate-pulse" />
                 </div>
-                <div className="text-xs text-gray-500 space-y-1">
-                  <p>Tips for best results:</p>
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>Use natural lighting</li>
-                    <li>Face the camera directly</li>
-                    <li>Remove makeup if possible</li>
-                    <li>Ensure clear visibility of your face</li>
-                  </ul>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="relative">
-                  <img 
-                    src={capturedImage} 
-                    alt="Captured" 
-                    className="w-full h-64 object-cover rounded-lg"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setCapturedImage(null)}
-                    className="flex-1"
-                  >
-                    Retake
-                  </Button>
-                  <Button 
-                    onClick={analyzeSkinTone}
-                    disabled={isAnalyzing}
-                    className="flex-1 bg-purple-600 hover:bg-purple-700"
-                  >
-                    {isAnalyzing ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Analyzing...
-                      </>
-                    ) : (
-                      'Analyze Skin Tone'
-                    )}
-                  </Button>
+                <div className="space-y-2">
+                  <p className="font-semibold text-purple-600">Analyzing your glow...</p>
+                  <p className="text-sm text-gray-600">
+                    ✨ Detecting skin tone<br/>
+                    🎨 Finding perfect colors<br/>
+                    💫 Creating your palette
+                  </p>
                 </div>
               </div>
             )}
+
+            <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+              <h3 className="font-semibold text-purple-800 mb-2">📸 Tips for best results:</h3>
+              <ul className="text-sm text-purple-700 space-y-1">
+                <li>• Use natural daylight (avoid harsh shadows)</li>
+                <li>• Face the camera directly</li>
+                <li>• Remove makeup if possible</li>
+                <li>• Ensure good image quality</li>
+              </ul>
+            </div>
           </CardContent>
         </Card>
       </div>

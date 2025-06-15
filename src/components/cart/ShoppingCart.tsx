@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import { Minus, Plus, ShoppingBag, Trash2, Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import TopNavBar from "../navigation/TopNavBar";
 
 interface CartItem {
   id: string;
@@ -20,9 +20,11 @@ interface CartItem {
 interface ShoppingCartProps {
   onBack: () => void;
   onCheckout: (items: CartItem[], total: number) => void;
+  onFavorites: () => void;
+  onProfile: () => void;
 }
 
-const ShoppingCart = ({ onBack, onCheckout }: ShoppingCartProps) => {
+const ShoppingCart = ({ onBack, onCheckout, onFavorites, onProfile }: ShoppingCartProps) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -134,15 +136,17 @@ const ShoppingCart = ({ onBack, onCheckout }: ShoppingCartProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4">
-      <div className="max-w-md mx-auto space-y-6">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="text-2xl font-bold text-gray-800">Shopping Cart</h1>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
+      <TopNavBar 
+        onBack={onBack}
+        onFavorites={onFavorites}
+        onCart={() => {}} // Already on cart page
+        onProfile={onProfile}
+        showBackButton={true}
+        title="Shopping Cart"
+      />
 
+      <div className="max-w-md mx-auto p-4 space-y-6">
         {cartItems.length === 0 ? (
           <Card className="shadow-lg">
             <CardContent className="p-8 text-center">
