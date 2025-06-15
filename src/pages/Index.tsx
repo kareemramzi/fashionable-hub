@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -64,7 +63,9 @@ const Index = () => {
       if (profileData && profileData.skin_tone) {
         setSkinData({
           skinTone: profileData.skin_tone,
-          palette: Array.isArray(profileData.color_palette) ? profileData.color_palette : []
+          palette: Array.isArray(profileData.color_palette) 
+            ? profileData.color_palette.filter((item): item is string => typeof item === 'string')
+            : []
         });
         setUserHasSavedAnalysis(true);
       }

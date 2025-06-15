@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,7 +51,9 @@ const UserProfile = ({ onBack, onSignOut, onUpdateAnalysis }: UserProfileProps) 
       if (skinAnalysis && skinAnalysis.skin_tone) {
         setSkinData({
           skin_tone: skinAnalysis.skin_tone,
-          color_palette: Array.isArray(skinAnalysis.color_palette) ? skinAnalysis.color_palette : []
+          color_palette: Array.isArray(skinAnalysis.color_palette) 
+            ? skinAnalysis.color_palette.filter((item): item is string => typeof item === 'string')
+            : []
         });
       }
     } catch (error: any) {
