@@ -56,7 +56,7 @@ const OutfitStyleSelector = ({ skinTone, colorPalette, onStyleSelected, onBack }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4 pb-32">
       <div className="max-w-md mx-auto space-y-6">
         <div className="flex items-center gap-4 mb-6">
           <Button variant="ghost" size="icon" onClick={step === "occasion" ? onBack : handleBackToOccasion}>
@@ -193,14 +193,16 @@ const OutfitStyleSelector = ({ skinTone, colorPalette, onStyleSelected, onBack }
 
         {/* Continue Button */}
         {step === "source" && (
-          <Button
-            onClick={handleContinue}
-            disabled={!selectedStyle || !selectedSource}
-            className="w-full bg-purple-600 hover:bg-purple-700 py-6 text-lg"
-            size="lg"
-          >
-            Get Recommendations
-          </Button>
+          <div className="pb-6">
+            <Button
+              onClick={handleContinue}
+              disabled={!selectedStyle || !selectedSource}
+              className="w-full bg-purple-600 hover:bg-purple-700 py-6 text-lg"
+              size="lg"
+            >
+              Get Recommendations
+            </Button>
+          </div>
         )}
       </div>
     </div>
