@@ -1,113 +1,172 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ShoppingCart, Heart, Filter } from "lucide-react";
-import { toast } from "sonner";
+import { Heart, ShoppingCart, ArrowLeft, Sparkles } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import TopNavBar from "./navigation/TopNavBar";
 
 interface ShoppingRecommendationsProps {
-  userProfile: {
-    skinTone: string;
-    colorPalette: string[];
-    selectedOutfitType: string;
-    wardrobe: any[];
-  };
+  skinTone: string;
+  colorPalette: string[];
   onBack: () => void;
+  onFavorites: () => void;
+  onCart: () => void;
+  onProfile: () => void;
 }
 
-const ShoppingRecommendations = ({ userProfile, onBack }: ShoppingRecommendationsProps) => {
-  const [favorites, setFavorites] = useState<number[]>([]);
+const ShoppingRecommendations = ({ 
+  skinTone, 
+  colorPalette, 
+  onBack, 
+  onFavorites, 
+  onCart, 
+  onProfile 
+}: ShoppingRecommendationsProps) => {
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const { toast } = useToast();
 
-  // Mock recommended items based on skin tone and outfit type
-  const mockRecommendations = [
+  const addToFavorites = async (product: any) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('favorites')
+        .insert({
+          user_id: user.id,
+          product_name: product.name,
+          brand: product.brand,
+          price: product.price,
+          color: product.color,
+          image_url: product.image
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Added to favorites! ❤️",
+        description: `${product.name} has been saved to your favorites`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error adding to favorites",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const addToCart = async (product: any) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('cart_items')
+        .insert({
+          user_id: user.id,
+          product_name: product.name,
+          brand: product.brand,
+          price: product.price,
+          size: 'M', // Default size
+          color: product.color,
+          image_url: product.image,
+          quantity: 1
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Added to cart! 🛒",
+        description: `${product.name} has been added to your cart`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error adding to cart",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const mockProducts = [
     {
       id: 1,
-      name: "Classic White Cotton Shirt",
-      brand: "Premium Brand",
-      price: 89.99,
+      name: "Silk Blouse",
+      brand: "Elegant Co.",
+      price: 89,
+      category: "Tops",
+      color: "#E8F4F8",
       image: "/placeholder.svg",
-      colors: ["White", "Light Blue", "Cream"],
-      sizes: ["S", "M", "L", "XL"],
-      match: 96,
-      inStock: true
+      match: 95
     },
     {
       id: 2,
-      name: "Tailored Navy Blazer",
-      brand: "Executive Collection",
-      price: 249.99,
+      name: "Tailored Blazer",
+      brand: "Professional Line",
+      price: 159,
+      category: "Outerwear",
+      color: "#D1E7DD",
       image: "/placeholder.svg",
-      colors: ["Navy", "Charcoal", "Black"],
-      sizes: ["S", "M", "L", "XL"],
-      match: 94,
-      inStock: true
+      match: 92
     },
     {
       id: 3,
-      name: "Slim Fit Dress Pants",
-      brand: "Modern Fit",
-      price: 129.99,
+      name: "Flowing Midi Dress",
+      brand: "Grace Style",
+      price: 125,
+      category: "Dresses",
+      color: "#F8E8FF",
       image: "/placeholder.svg",
-      colors: ["Black", "Navy", "Charcoal"],
-      sizes: ["28", "30", "32", "34", "36"],
-      match: 91,
-      inStock: false
+      match: 88
     },
     {
       id: 4,
-      name: "Leather Oxford Shoes",
-      brand: "Luxury Footwear",
-      price: 199.99,
+      name: "Classic Trousers",
+      brand: "Timeless Fashion",
+      price: 95,
+      category: "Bottoms",
+      color: "#E1F5FE",
       image: "/placeholder.svg",
-      colors: ["Black", "Brown"],
-      sizes: ["7", "8", "9", "10", "11"],
-      match: 89,
-      inStock: true
+      match: 90
     }
   ];
 
-  const toggleFavorite = (itemId: number) => {
-    setFavorites(prev => 
-      prev.includes(itemId) 
-        ? prev.filter(id => id !== itemId)
-        : [...prev, itemId]
-    );
+  const getRecommendedProducts = () => {
+    if (selectedCategory === "All") {
+      return mockProducts;
+    }
+    return mockProducts.filter(product => product.category === selectedCategory);
   };
 
-  const handleAddToCart = (item: any) => {
-    toast.success(`${item.name} added to cart!`);
-  };
-
-  const handleCheckout = (item: any) => {
-    toast.info("Redirecting to checkout...");
-    // In a real app, this would redirect to the partner store's checkout
-  };
+  const categories = ["All", "Tops", "Dresses", "Bottoms", "Outerwear"];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4">
-      <div className="max-w-md mx-auto space-y-6">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-gray-800">Recommended for You</h1>
-            <p className="text-sm text-gray-600">Perfect for {userProfile.selectedOutfitType} occasions</p>
-          </div>
-          <Button variant="ghost" size="icon">
-            <Filter className="w-5 h-5" />
-          </Button>
-        </div>
-
-        <Card className="shadow-lg">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Color Matched Items</CardTitle>
-            <div className="flex gap-1">
-              {userProfile.colorPalette.slice(0, 4).map((color, index) => (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-20">
+      <TopNavBar 
+        onBack={onBack}
+        onFavorites={onFavorites}
+        onCart={onCart}
+        onProfile={onProfile}
+        showBackButton={true}
+        title="Recommendations"
+      />
+      
+      <div className="max-w-md mx-auto p-4 space-y-6">
+        <Card className="shadow-xl bg-white/80 backdrop-blur-lg border border-white/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3">
+              <Sparkles className="w-6 h-6 text-purple-600" />
+              <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                Perfect for {skinTone}
+              </span>
+            </CardTitle>
+            <div className="flex gap-2">
+              {colorPalette.slice(0, 4).map((color, index) => (
                 <div
                   key={index}
-                  className="w-6 h-6 rounded-full border-2 border-white shadow-sm"
+                  className="w-6 h-6 rounded-full border-2 border-white shadow-md"
                   style={{ backgroundColor: color }}
                 />
               ))}
@@ -115,73 +174,70 @@ const ShoppingRecommendations = ({ userProfile, onBack }: ShoppingRecommendation
           </CardHeader>
         </Card>
 
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {categories.map((category) => (
+            <Button
+              key={category}
+              variant={selectedCategory === category ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory(category)}
+              className={`whitespace-nowrap ${
+                selectedCategory === category 
+                  ? "bg-purple-600 hover:bg-purple-700" 
+                  : "hover:bg-purple-50"
+              }`}
+            >
+              {category}
+            </Button>
+          ))}
+        </div>
+
         <div className="space-y-4">
-          {mockRecommendations.map((item) => (
-            <Card key={item.id} className="shadow-lg">
+          {getRecommendedProducts().map((product) => (
+            <Card key={product.id} className="shadow-lg bg-white/90 backdrop-blur-sm">
               <CardContent className="p-4">
                 <div className="flex gap-4">
-                  <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <span className="text-gray-400 text-xs">Image</span>
-                  </div>
-                  
-                  <div className="flex-1 space-y-2">
-                    <div className="flex justify-between items-start">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-20 h-20 object-cover rounded-lg"
+                  />
+                  <div className="flex-1">
+                    <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h3 className="font-medium text-gray-800">{item.name}</h3>
-                        <p className="text-sm text-gray-600">{item.brand}</p>
+                        <h3 className="font-semibold text-gray-800">{product.name}</h3>
+                        <p className="text-sm text-gray-600">{product.brand}</p>
                       </div>
+                      <div className="text-right">
+                        <p className="font-bold text-purple-600">${product.price}</p>
+                        <p className="text-xs text-green-600">{product.match}% match</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div
+                        className="w-4 h-4 rounded-full border border-gray-300"
+                        style={{ backgroundColor: product.color }}
+                      />
+                      <span className="text-xs text-gray-600">Perfect for your tone</span>
+                    </div>
+                    <div className="flex gap-2">
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => toggleFavorite(item.id)}
+                        size="sm"
+                        variant="outline"
+                        onClick={() => addToFavorites(product)}
+                        className="flex-1 text-pink-600 border-pink-600 hover:bg-pink-50"
                       >
-                        <Heart
-                          className={`w-4 h-4 ${
-                            favorites.includes(item.id)
-                              ? 'fill-red-500 text-red-500'
-                              : 'text-gray-400'
-                          }`}
-                        />
+                        <Heart className="w-4 h-4 mr-1" />
+                        Save
                       </Button>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="bg-green-100 text-green-800">
-                        {item.match}% match
-                      </Badge>
-                      {!item.inStock && (
-                        <Badge variant="destructive">Out of Stock</Badge>
-                      )}
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <span className="font-bold text-lg text-purple-600">
-                        ${item.price}
-                      </span>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleAddToCart(item)}
-                          disabled={!item.inStock}
-                        >
-                          <ShoppingCart className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          className="bg-purple-600 hover:bg-purple-700"
-                          onClick={() => handleCheckout(item)}
-                          disabled={!item.inStock}
-                        >
-                          Buy Now
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="text-xs text-gray-500">
-                      <p>Colors: {item.colors.join(", ")}</p>
-                      <p>Sizes: {item.sizes.join(", ")}</p>
+                      <Button
+                        size="sm"
+                        onClick={() => addToCart(product)}
+                        className="flex-1 bg-purple-600 hover:bg-purple-700"
+                      >
+                        <ShoppingCart className="w-4 h-4 mr-1" />
+                        Add to Cart
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -189,18 +245,6 @@ const ShoppingRecommendations = ({ userProfile, onBack }: ShoppingRecommendation
             </Card>
           ))}
         </div>
-
-        <Card className="bg-purple-50 border-purple-200">
-          <CardContent className="p-4 text-center">
-            <h3 className="font-medium text-purple-800 mb-2">Premium Styling Service</h3>
-            <p className="text-sm text-purple-600 mb-3">
-              Get personalized outfit combinations delivered monthly
-            </p>
-            <Button className="bg-purple-600 hover:bg-purple-700">
-              Learn More
-            </Button>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

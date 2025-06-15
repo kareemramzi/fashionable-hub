@@ -77,7 +77,7 @@ const SkinAnalysis = ({ onAnalysisComplete, onBack, onFavorites, onCart, onProfi
 
   if (analysisResults && uploadedImage) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-20">
         <TopNavBar 
           onBack={onBack}
           onFavorites={onFavorites}
@@ -101,7 +101,7 @@ const SkinAnalysis = ({ onAnalysisComplete, onBack, onFavorites, onCart, onProfi
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-20">
       <TopNavBar 
         onBack={onBack}
         onFavorites={onFavorites}

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,8 +37,7 @@ const FavoritesList = ({ onBack, onCart, onProfile }: FavoritesListProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Use 'any' temporarily to avoid TypeScript errors while types are updating
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('favorites')
         .select('*')
         .eq('user_id', user.id)
@@ -58,7 +58,7 @@ const FavoritesList = ({ onBack, onCart, onProfile }: FavoritesListProps) => {
 
   const removeFavorite = async (itemId: string) => {
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('favorites')
         .delete()
         .eq('id', itemId);
@@ -125,7 +125,7 @@ const FavoritesList = ({ onBack, onCart, onProfile }: FavoritesListProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-20">
       <TopNavBar 
         onBack={onBack}
         onFavorites={() => {}} // Already on favorites page

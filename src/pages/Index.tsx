@@ -1,325 +1,256 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Camera, Palette, ShoppingBag, User, ShoppingCart, Sparkles, Zap, Heart } from "lucide-react";
-import SkinAnalysis from "@/components/SkinAnalysis";
-import OutfitSelector from "@/components/OutfitSelector";
-import WardrobeManager from "@/components/WardrobeManager";
-import ShoppingRecommendations from "@/components/ShoppingRecommendations";
-import SignIn from "@/components/auth/SignIn";
-import SignUp from "@/components/auth/SignUp";
-import UserProfile from "@/components/profile/UserProfile";
-import ShoppingCartComponent from "@/components/cart/ShoppingCart";
-import FavoritesList from "@/components/FavoritesList";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
-type AppScreen = 'home' | 'skin-analysis' | 'outfit-selector' | 'wardrobe' | 'shopping' | 'signin' | 'signup' | 'profile' | 'cart' | 'favorites';
+import SkinAnalysis from "@/components/SkinAnalysis";
+import OutfitSelector from "@/components/OutfitSelector";
+import ShoppingRecommendations from "@/components/ShoppingRecommendations";
+import WardrobeManager from "@/components/WardrobeManager";
+import SignIn from "@/components/auth/SignIn";
+import SignUp from "@/components/auth/SignUp";
+import FavoritesList from "@/components/FavoritesList";
+import ShoppingCart from "@/components/cart/ShoppingCart";
+import UserProfile from "@/components/profile/UserProfile";
+import BottomNavBar from "@/components/navigation/BottomNavBar";
+import { Session, User } from "@supabase/supabase-js";
 
 const Index = () => {
-  const [currentScreen, setCurrentScreen] = useState<AppScreen>('home');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [userProfile, setUserProfile] = useState({
-    skinTone: '',
-    colorPalette: [] as string[],
-    selectedOutfitType: '',
-    wardrobe: [] as any[]
-  });
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [currentView, setCurrentView] = useState<string>("home");
+  const [skinData, setSkinData] = useState<{skinTone: string; palette: string[]} | null>(null);
+  const [showSignUp, setShowSignUp] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    checkAuthState();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-      if (event === 'SIGNED_OUT') {
-        setCurrentScreen('home');
-        setUserProfile({
-          skinTone: '',
-          colorPalette: [],
-          selectedOutfitType: '',
-          wardrobe: []
-        });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          setTimeout(() => {
+            fetchUserProfile(session.user.id);
+          }, 0);
+        }
+      }
+    );
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const checkAuthState = async () => {
+  const fetchUserProfile = async (userId: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('skin_tone, color_palette')
+        .eq('user_id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching user profile:', error);
+        return;
+      }
+
+      if (data && data.skin_tone && data.color_palette) {
+        setSkinData({
+          skinTone: data.skin_tone,
+          palette: data.color_palette
+        });
+      }
     } catch (error) {
-      console.error('Error checking auth state:', error);
-    } finally {
-      setIsLoading(false);
+      console.error('Error in fetchUserProfile:', error);
     }
   };
 
-  const handleAuthRequired = (targetScreen: AppScreen) => {
-    if (!isAuthenticated) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to access this feature",
-      });
-      setCurrentScreen('signin');
-      return false;
+  const handleAnalysisComplete = async (skinTone: string, palette: string[]) => {
+    setSkinData({ skinTone, palette });
+    
+    if (user) {
+      try {
+        const { error } = await supabase
+          .from('user_profiles')
+          .upsert({
+            user_id: user.id,
+            skin_tone: skinTone,
+            color_palette: palette,
+            updated_at: new Date().toISOString()
+          });
+
+        if (error) {
+          console.error('Error saving skin analysis:', error);
+          toast({
+            title: "Warning",
+            description: "Your analysis was completed but couldn't be saved for next time.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Analysis Saved! ✨",
+            description: "Your skin tone analysis has been saved to your profile.",
+          });
+        }
+      } catch (error) {
+        console.error('Error in handleAnalysisComplete:', error);
+      }
     }
-    setCurrentScreen(targetScreen);
-    return true;
+    
+    setCurrentView("recommendations");
   };
 
-  const renderScreen = () => {
-    if (isLoading) {
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-cyan-100 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent border-t-pink-500 border-r-purple-500 mx-auto mb-4"></div>
-            <p className="text-gray-600 font-medium">Loading your style journey...</p>
-          </div>
-        </div>
-      );
-    }
+  const handleCheckout = (items: any[], total: number) => {
+    toast({
+      title: "Checkout",
+      description: `Processing ${items.length} items for $${total.toFixed(2)}`,
+    });
+  };
 
-    switch (currentScreen) {
-      case 'signin':
+  const handleSignOut = () => {
+    setSkinData(null);
+    setCurrentView("home");
+  };
+
+  if (!session) {
+    return showSignUp ? (
+      <SignUp 
+        onSuccess={() => setShowSignUp(false)} 
+        onSwitchToSignIn={() => setShowSignUp(false)} 
+      />
+    ) : (
+      <SignIn 
+        onSuccess={() => {}} 
+        onSwitchToSignUp={() => setShowSignUp(true)} 
+      />
+    );
+  }
+
+  const renderCurrentView = () => {
+    switch (currentView) {
+      case "skinAnalysis":
         return (
-          <SignIn 
-            onBack={() => setCurrentScreen('home')}
-            onSignUpClick={() => setCurrentScreen('signup')}
-            onSignInSuccess={() => setCurrentScreen('home')}
+          <SkinAnalysis
+            onAnalysisComplete={handleAnalysisComplete}
+            onBack={() => setCurrentView("home")}
+            onFavorites={() => setCurrentView("favorites")}
+            onCart={() => setCurrentView("cart")}
+            onProfile={() => setCurrentView("profile")}
           />
         );
-      case 'signup':
+      case "recommendations":
         return (
-          <SignUp 
-            onBack={() => setCurrentScreen('home')}
-            onSignInClick={() => setCurrentScreen('signin')}
+          <ShoppingRecommendations
+            skinTone={skinData?.skinTone || ""}
+            colorPalette={skinData?.palette || []}
+            onBack={() => setCurrentView("home")}
+            onFavorites={() => setCurrentView("favorites")}
+            onCart={() => setCurrentView("cart")}
+            onProfile={() => setCurrentView("profile")}
           />
         );
-      case 'profile':
+      case "outfitSelector":
         return (
-          <UserProfile 
-            onBack={() => setCurrentScreen('home')}
-            onSignOut={() => {
-              setIsAuthenticated(false);
-              setCurrentScreen('home');
-            }}
+          <OutfitSelector
+            skinTone={skinData?.skinTone || ""}
+            colorPalette={skinData?.palette || []}
+            onBack={() => setCurrentView("home")}
+            onFavorites={() => setCurrentView("favorites")}
+            onCart={() => setCurrentView("cart")}
+            onProfile={() => setCurrentView("profile")}
           />
         );
-      case 'cart':
+      case "wardrobeManager":
         return (
-          <ShoppingCartComponent 
-            onBack={() => setCurrentScreen('home')}
-            onFavorites={() => setCurrentScreen('favorites')}
-            onProfile={() => setCurrentScreen('profile')}
-            onCheckout={(items, total) => {
-              toast({
-                title: "Checkout initiated",
-                description: `Total: $${total.toFixed(2)}. Redirecting to payment...`,
-              });
-            }}
+          <WardrobeManager
+            onBack={() => setCurrentView("home")}
+            onFavorites={() => setCurrentView("favorites")}
+            onCart={() => setCurrentView("cart")}
+            onProfile={() => setCurrentView("profile")}
           />
         );
-      case 'favorites':
+      case "favorites":
         return (
-          <FavoritesList 
-            onBack={() => setCurrentScreen('home')}
-            onCart={() => setCurrentScreen('cart')}
-            onProfile={() => setCurrentScreen('profile')}
+          <FavoritesList
+            onBack={() => setCurrentView("home")}
+            onCart={() => setCurrentView("cart")}
+            onProfile={() => setCurrentView("profile")}
           />
         );
-      case 'skin-analysis':
+      case "cart":
         return (
-          <SkinAnalysis 
-            onAnalysisComplete={(skinTone, palette) => {
-              setUserProfile(prev => ({ ...prev, skinTone, colorPalette: palette }));
-              setCurrentScreen('outfit-selector');
-            }}
-            onBack={() => setCurrentScreen('home')}
-            onFavorites={() => setCurrentScreen('favorites')}
-            onCart={() => setCurrentScreen('cart')}
-            onProfile={() => setCurrentScreen('profile')}
+          <ShoppingCart
+            onBack={() => setCurrentView("home")}
+            onCheckout={handleCheckout}
+            onFavorites={() => setCurrentView("favorites")}
+            onProfile={() => setCurrentView("profile")}
           />
         );
-      case 'outfit-selector':
+      case "profile":
         return (
-          <OutfitSelector 
-            skinTone={userProfile.skinTone}
-            colorPalette={userProfile.colorPalette}
-            onOutfitSelected={(outfitType) => {
-              setUserProfile(prev => ({ ...prev, selectedOutfitType: outfitType }));
-              setCurrentScreen('wardrobe');
-            }}
-            onBack={() => setCurrentScreen('skin-analysis')}
-          />
-        );
-      case 'wardrobe':
-        return (
-          <WardrobeManager 
-            userProfile={userProfile}
-            onProceedToShopping={() => setCurrentScreen('shopping')}
-            onBack={() => setCurrentScreen('outfit-selector')}
-          />
-        );
-      case 'shopping':
-        return (
-          <ShoppingRecommendations 
-            userProfile={userProfile}
-            onBack={() => setCurrentScreen('wardrobe')}
+          <UserProfile
+            onBack={() => setCurrentView("home")}
+            onSignOut={handleSignOut}
           />
         );
       default:
         return (
-          <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-cyan-100 relative overflow-hidden">
-            {/* Animated background elements */}
-            <div className="absolute inset-0 overflow-hidden">
-              <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-pink-400 to-purple-600 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
-              <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
-              <div className="absolute top-40 left-40 w-80 h-80 bg-gradient-to-br from-yellow-400 to-pink-600 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
-            </div>
+          <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-20">
+            <div className="max-w-md mx-auto p-4 space-y-6">
+              <div className="text-center mb-8">
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+                  StyleGlow AI
+                </h1>
+                <p className="text-gray-600">Discover your perfect colors & style</p>
+              </div>
 
-            <div className="relative z-10 max-w-md mx-auto space-y-6 p-4">
-              {/* Header with auth buttons */}
-              <div className="flex justify-between items-center py-6">
-                <div className="text-center flex-1">
-                  <div className="relative inline-block">
-                    <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-600 via-purple-600 to-cyan-600 mb-2 animate-pulse">
-                      GRWMe
-                    </h1>
-                    <div className="absolute -top-2 -right-2">
-                      <Sparkles className="w-6 h-6 text-yellow-400 animate-spin" />
-                    </div>
-                  </div>
-                  <p className="text-gray-700 font-medium bg-white/50 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
-                    ✨ Your AI-Powered Style Revolution ✨
+              <div className="grid gap-4">
+                <div
+                  onClick={() => skinData ? setCurrentView("recommendations") : setCurrentView("skinAnalysis")}
+                  className="bg-white/80 backdrop-blur-lg p-6 rounded-xl shadow-xl border border-white/30 cursor-pointer hover:scale-105 transition-all duration-300"
+                >
+                  <h2 className="text-xl font-bold text-purple-800 mb-2">
+                    {skinData ? "🎨 Your Color Palette" : "✨ Discover Your Glow"}
+                  </h2>
+                  <p className="text-gray-600 mb-4">
+                    {skinData 
+                      ? `${skinData.skinTone} tone with personalized colors` 
+                      : "AI-powered skin tone analysis for perfect color matching"
+                    }
                   </p>
-                </div>
-                <div className="flex gap-2">
-                  {isAuthenticated ? (
-                    <>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => setCurrentScreen('favorites')}
-                        className="bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all duration-300 hover:scale-110"
-                      >
-                        <Heart className="w-5 h-5 text-pink-600" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => setCurrentScreen('cart')}
-                        className="bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all duration-300 hover:scale-110"
-                      >
-                        <ShoppingCart className="w-5 h-5 text-purple-600" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => setCurrentScreen('profile')}
-                        className="bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all duration-300 hover:scale-110"
-                      >
-                        <User className="w-5 h-5 text-purple-600" />
-                      </Button>
-                    </>
-                  ) : (
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline"
-                        onClick={() => setCurrentScreen('signin')}
-                        className="bg-white/20 backdrop-blur-sm border-purple-300 text-purple-700 hover:bg-purple-100 transition-all duration-300 hover:scale-105"
-                      >
-                        Sign In
-                      </Button>
-                      <Button 
-                        onClick={() => setCurrentScreen('signup')}
-                        className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white transition-all duration-300 hover:scale-105 shadow-lg"
-                      >
-                        Sign Up
-                      </Button>
+                  {skinData && (
+                    <div className="flex gap-2 mb-4">
+                      {skinData.palette.slice(0, 4).map((color, index) => (
+                        <div
+                          key={index}
+                          className="w-8 h-8 rounded-full border-2 border-white shadow-md"
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
                     </div>
                   )}
                 </div>
-              </div>
 
-              {/* Main action card */}
-              <Card className="shadow-2xl bg-white/70 backdrop-blur-lg border border-white/20 hover:shadow-3xl transition-all duration-500 hover:scale-105">
-                <CardHeader className="text-center pb-4">
-                  <CardTitle className="flex items-center justify-center gap-3">
-                    <div className="relative">
-                      <Palette className="w-8 h-8 text-purple-600" />
-                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-pink-400 rounded-full animate-ping"></div>
-                    </div>
-                    <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                      Start Your Glow Up!
-                    </span>
-                  </CardTitle>
-                  <CardDescription className="text-gray-600 font-medium">
-                    Discover your perfect colors and unleash your style potential
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Button 
-                    onClick={() => {
-                      if (isAuthenticated) {
-                        setCurrentScreen('skin-analysis')
-                      } else {
-                        handleAuthRequired('skin-analysis');
-                      }
-                    }}
-                    className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-600 hover:from-purple-700 hover:via-pink-700 hover:to-cyan-700 text-white py-6 text-lg font-bold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 relative overflow-hidden group"
-                    size="lg"
-                  >
-                    <div className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                    <Camera className="w-6 h-6 mr-3" />
-                    <Zap className="w-4 h-4 mr-1 animate-bounce" />
-                    Analyze Your Glow
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Feature cards */}
-              <div className="grid grid-cols-2 gap-4">
-                <Card 
-                  className="cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105 bg-white/60 backdrop-blur-md border border-white/30 group"
-                  onClick={() => handleAuthRequired('wardrobe')}
+                <div
+                  onClick={() => setCurrentView("outfitSelector")}
+                  className="bg-white/80 backdrop-blur-lg p-6 rounded-xl shadow-xl border border-white/30 cursor-pointer hover:scale-105 transition-all duration-300"
                 >
-                  <CardContent className="p-6 text-center">
-                    <div className="relative mb-3">
-                      <User className="w-10 h-10 mx-auto text-purple-600 group-hover:scale-110 transition-transform duration-300" />
-                      <Heart className="w-4 h-4 absolute -top-1 -right-1 text-pink-500 animate-pulse" />
-                    </div>
-                    <h3 className="font-bold text-gray-800 group-hover:text-purple-600 transition-colors">My Wardrobe</h3>
-                    <p className="text-xs text-gray-600 mt-1">Curate your style</p>
-                  </CardContent>
-                </Card>
-                <Card 
-                  className="cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105 bg-white/60 backdrop-blur-md border border-white/30 group"
-                  onClick={() => handleAuthRequired('shopping')}
-                >
-                  <CardContent className="p-6 text-center">
-                    <div className="relative mb-3">
-                      <ShoppingBag className="w-10 h-10 mx-auto text-pink-600 group-hover:scale-110 transition-transform duration-300" />
-                      <Sparkles className="w-4 h-4 absolute -top-1 -right-1 text-yellow-500 animate-spin" />
-                    </div>
-                    <h3 className="font-bold text-gray-800 group-hover:text-pink-600 transition-colors">Shop Trends</h3>
-                    <p className="text-xs text-gray-600 mt-1">Find your vibe</p>
-                  </CardContent>
-                </Card>
-              </div>
+                  <h2 className="text-xl font-bold text-purple-800 mb-2">👗 Style Assistant</h2>
+                  <p className="text-gray-600">Get outfit recommendations based on your colors</p>
+                </div>
 
-              {/* Bottom message */}
-              <div className="text-center mt-8">
-                <div className="bg-white/40 backdrop-blur-sm rounded-full px-6 py-3 border border-white/30 shadow-lg">
-                  <p className="text-sm font-medium text-gray-700">
-                    {isAuthenticated ? 
-                      "🌟 Ready to level up your style game? 🌟" : 
-                      "🚀 Join the style revolution - Sign up now! 🚀"
-                    }
-                  </p>
+                <div
+                  onClick={() => setCurrentView("wardrobeManager")}
+                  className="bg-white/80 backdrop-blur-lg p-6 rounded-xl shadow-xl border border-white/30 cursor-pointer hover:scale-105 transition-all duration-300"
+                >
+                  <h2 className="text-xl font-bold text-purple-800 mb-2">👚 My Wardrobe</h2>
+                  <p className="text-gray-600">Organize and manage your clothing collection</p>
                 </div>
               </div>
             </div>
@@ -328,7 +259,19 @@ const Index = () => {
     }
   };
 
-  return renderScreen();
+  return (
+    <div className="relative min-h-screen">
+      {renderCurrentView()}
+      <BottomNavBar
+        currentPage={currentView}
+        onHome={() => setCurrentView("home")}
+        onFavorites={() => setCurrentView("favorites")}
+        onCart={() => setCurrentView("cart")}
+        onProfile={() => setCurrentView("profile")}
+        onShopping={() => setCurrentView("recommendations")}
+      />
+    </div>
+  );
 };
 
 export default Index;
