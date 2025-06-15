@@ -51,6 +51,39 @@ export type Database = {
         }
         Relationships: []
       }
+      favorites: {
+        Row: {
+          brand: string
+          color: string
+          created_at: string
+          id: string
+          image_url: string
+          price: number
+          product_name: string
+          user_id: string
+        }
+        Insert: {
+          brand: string
+          color: string
+          created_at?: string
+          id?: string
+          image_url: string
+          price: number
+          product_name: string
+          user_id: string
+        }
+        Update: {
+          brand?: string
+          color?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+          price?: number
+          product_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
