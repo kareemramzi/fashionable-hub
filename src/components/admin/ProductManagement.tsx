@@ -253,7 +253,7 @@ const ProductManagement = () => {
                 </div>
                 <div>
                   <Label htmlFor="gender">Gender *</Label>
-                  <Select value={formData.gender} onValueChange={(value) => setFormData(prev => ({ ...prev, gender: value }))}>
+                  <Select value={formData.gender} onValueChange={(value: 'male' | 'female' | 'unisex') => setFormData(prev => ({ ...prev, gender: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
