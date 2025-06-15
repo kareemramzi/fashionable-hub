@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -49,10 +50,9 @@ const Index = () => {
 
   const fetchUserProfile = async (userId: string) => {
     try {
+      // Use a raw SQL query to avoid TypeScript issues with the new table
       const { data, error } = await supabase
-        .from('user_profiles')
-        .select('skin_tone, color_palette')
-        .eq('user_id', userId)
+        .rpc('get_user_profile', { user_id: userId })
         .single();
 
       if (error && error.code !== 'PGRST116') {
@@ -67,7 +67,28 @@ const Index = () => {
         });
       }
     } catch (error) {
-      console.error('Error in fetchUserProfile:', error);
+      // Fallback: try direct table access
+      try {
+        const { data, error: directError } = await supabase
+          .from('user_profiles' as any)
+          .select('skin_tone, color_palette')
+          .eq('user_id', userId)
+          .single();
+
+        if (directError && directError.code !== 'PGRST116') {
+          console.error('Error fetching user profile:', directError);
+          return;
+        }
+
+        if (data && data.skin_tone && data.color_palette) {
+          setSkinData({
+            skinTone: data.skin_tone,
+            palette: data.color_palette
+          });
+        }
+      } catch (fallbackError) {
+        console.error('Error in fetchUserProfile fallback:', fallbackError);
+      }
     }
   };
 
@@ -77,7 +98,7 @@ const Index = () => {
     if (user) {
       try {
         const { error } = await supabase
-          .from('user_profiles')
+          .from('user_profiles' as any)
           .upsert({
             user_id: user.id,
             skin_tone: skinTone,
@@ -121,12 +142,10 @@ const Index = () => {
   if (!session) {
     return showSignUp ? (
       <SignUp 
-        onSuccess={() => setShowSignUp(false)} 
         onSwitchToSignIn={() => setShowSignUp(false)} 
       />
     ) : (
       <SignIn 
-        onSuccess={() => {}} 
         onSwitchToSignUp={() => setShowSignUp(true)} 
       />
     );
@@ -161,7 +180,6 @@ const Index = () => {
             skinTone={skinData?.skinTone || ""}
             colorPalette={skinData?.palette || []}
             onBack={() => setCurrentView("home")}
-            onFavorites={() => setCurrentView("favorites")}
             onCart={() => setCurrentView("cart")}
             onProfile={() => setCurrentView("profile")}
           />
@@ -170,7 +188,6 @@ const Index = () => {
         return (
           <WardrobeManager
             onBack={() => setCurrentView("home")}
-            onFavorites={() => setCurrentView("favorites")}
             onCart={() => setCurrentView("cart")}
             onProfile={() => setCurrentView("profile")}
           />
@@ -205,7 +222,7 @@ const Index = () => {
             <div className="max-w-md mx-auto p-4 space-y-6">
               <div className="text-center mb-8">
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
-                  StyleGlow AI
+                  GRWMe
                 </h1>
                 <p className="text-gray-600">Discover your perfect colors & style</p>
               </div>
