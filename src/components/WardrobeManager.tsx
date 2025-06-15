@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -50,6 +49,7 @@ interface WardrobeManagerProps {
 const WardrobeManager = ({ userProfile, onProceedToShopping, onBack, onProfile }: WardrobeManagerProps) => {
   const [activeTab, setActiveTab] = useState("combinations");
   const [outfitCombinations, setOutfitCombinations] = useState<OutfitCombination[]>([]);
+  const [showAddItem, setShowAddItem] = useState(false);
 
   const { data: session } = useQuery({
     queryKey: ['session'],
@@ -126,6 +126,21 @@ const WardrobeManager = ({ userProfile, onProceedToShopping, onBack, onProfile }
     setOutfitCombinations(combinations);
   };
 
+  if (showAddItem) {
+    const AddWardrobeItem = lazy(() => import("./wardrobe/AddWardrobeItem"));
+    return (
+      <Suspense fallback={
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4">
+          <div className="max-w-md mx-auto flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+          </div>
+        </div>
+      }>
+        <AddWardrobeItem onBack={() => setShowAddItem(false)} />
+      </Suspense>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4">
@@ -152,6 +167,16 @@ const WardrobeManager = ({ userProfile, onProceedToShopping, onBack, onProfile }
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="text-2xl font-bold text-gray-800">Your Wardrobe</h1>
+          <div className="ml-auto">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShowAddItem(true)}
+              className="bg-purple-600 text-white hover:bg-purple-700"
+            >
+              <Plus className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         <Card className="shadow-lg">

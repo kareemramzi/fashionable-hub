@@ -1,10 +1,13 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, ShoppingCart, Star, ArrowLeft, Palette } from "lucide-react";
+import { Heart, ShoppingCart, Star, Filter, Palette, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import TopNavBar from "./navigation/TopNavBar";
+import { fetchProducts, addProductToWardrobe, Product } from "@/lib/products";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface OutfitRecommendationsProps {
   occasion: string;
@@ -21,105 +24,167 @@ const OutfitRecommendations = ({
   skinTone, 
   colorPalette, 
   onBack, 
-  onAddToCart,
-  onAddToFavorites,
+  onAddToCart, 
+  onAddToFavorites, 
   onShopNow 
 }: OutfitRecommendationsProps) => {
-  const [favorites, setFavorites] = useState<number[]>([]);
-  const [selectedSource, setSelectedSource] = useState<'wardrobe' | 'shop'>('shop');
+  const [recommendationSource, setRecommendationSource] = useState<"wardrobe" | "shop">("shop");
+  const [wardrobeOutfits, setWardrobeOutfits] = useState<any[]>([]);
+
   const { toast } = useToast();
 
-  // Generate outfit recommendations based on occasion and skin tone
-  const getOutfitRecommendations = () => {
-    const baseItems = {
-      formal: [
-        { id: 1, type: "blazer", name: "Tailored Blazer", price: 2400, image: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=300&h=400&fit=crop" },
-        { id: 2, type: "shirt", name: "Silk Blouse", price: 1350, image: "https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=300&h=400&fit=crop" },
-        { id: 3, type: "pants", name: "Dress Trousers", price: 1500, image: "https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=300&h=400&fit=crop" },
-        { id: 4, type: "shoes", name: "Oxford Heels", price: 1950, image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300&h=400&fit=crop" }
-      ],
-      casual: [
-        { id: 5, type: "top", name: "Cotton T-Shirt", price: 450, image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300&h=400&fit=crop" },
-        { id: 6, type: "jeans", name: "Denim Jeans", price: 1200, image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=300&h=400&fit=crop" },
-        { id: 7, type: "cardigan", name: "Knit Cardigan", price: 1050, image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=300&h=400&fit=crop" },
-        { id: 8, type: "sneakers", name: "White Sneakers", price: 1350, image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=300&h=400&fit=crop" }
-      ],
-      party: [
-        { id: 9, type: "dress", name: "Cocktail Dress", price: 2250, image: "https://images.unsplash.com/photo-1566479179817-c3e6fba5dde4?w=300&h=400&fit=crop" },
-        { id: 10, type: "heels", name: "Strappy Heels", price: 1800, image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300&h=400&fit=crop" },
-        { id: 11, type: "clutch", name: "Evening Clutch", price: 900, image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=300&h=400&fit=crop" },
-        { id: 12, type: "jewelry", name: "Statement Earrings", price: 600, image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=300&h=400&fit=crop" }
-      ],
-      business: [
-        { id: 13, type: "blazer", name: "Business Blazer", price: 2100, image: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=300&h=400&fit=crop" },
-        { id: 14, type: "pants", name: "Straight Leg Trousers", price: 1350, image: "https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=300&h=400&fit=crop" }
-      ],
-      weekend: [
-        { id: 15, type: "sweater", name: "Cozy Sweater", price: 900, image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=300&h=400&fit=crop" },
-        { id: 16, type: "jeans", name: "Relaxed Jeans", price: 1050, image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=300&h=400&fit=crop" }
-      ],
-      workout: [
-        { id: 17, type: "sports bra", name: "Athletic Sports Bra", price: 600, image: "https://images.unsplash.com/photo-1506629905607-24fa5e4e8d7d?w=300&h=400&fit=crop" },
-        { id: 18, type: "leggings", name: "High-Waist Leggings", price: 750, image: "https://images.unsplash.com/photo-1506629905607-24fa5e4e8d7d?w=300&h=400&fit=crop" }
-      ],
-      travel: [
-        { id: 19, type: "jacket", name: "Travel Jacket", price: 1350, image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=300&h=400&fit=crop" },
-        { id: 20, type: "pants", name: "Comfortable Pants", price: 900, image: "https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=300&h=400&fit=crop" }
-      ],
-      date: [
-        { id: 21, type: "dress", name: "Date Night Dress", price: 1950, image: "https://images.unsplash.com/photo-1566479179817-c3e6fba5dde4?w=300&h=400&fit=crop" },
-        { id: 22, type: "heels", name: "Elegant Heels", price: 1500, image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300&h=400&fit=crop" }
-      ]
-    };
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ['products'],
+    queryFn: fetchProducts,
+  });
 
-    const occasionKey = occasion.toLowerCase() as keyof typeof baseItems;
-    const items = baseItems[occasionKey] || baseItems.casual;
+  const { data: session } = useQuery({
+    queryKey: ['session'],
+    queryFn: async () => {
+      const { data } = await supabase.auth.getSession();
+      return data.session;
+    },
+  });
 
-    return items.map(item => ({
-      ...item,
-      color: colorPalette[Math.floor(Math.random() * colorPalette.length)],
-      match: Math.floor(Math.random() * 15) + 85, // 85-100% match
-      brand: ["Elegant Essentials", "Modern Fit", "Chic Collection", "Luxury Knits"][Math.floor(Math.random() * 4)]
-    }));
+  const { data: wardrobeItems = [] } = useQuery({
+    queryKey: ['wardrobe-items', session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user) return [];
+      const { data, error } = await supabase
+        .from('wardrobe_items')
+        .select(`
+          *,
+          products (*)
+        `)
+        .eq('user_id', session.user.id);
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!session?.user
+  });
+
+  useEffect(() => {
+    if (wardrobeItems.length > 0) {
+      // Generate outfit combinations from wardrobe items
+      const combinations = generateWardrobeOutfits(wardrobeItems);
+      setWardrobeOutfits(combinations);
+    }
+  }, [wardrobeItems]);
+
+  const generateWardrobeOutfits = (items: any[]) => {
+    // Group items by category
+    const tops = items.filter(item => item.products?.category === 'tops');
+    const bottoms = items.filter(item => item.products?.category === 'bottoms');
+    const dresses = items.filter(item => item.products?.category === 'dresses');
+    const outerwear = items.filter(item => item.products?.category === 'outerwear');
+
+    const outfits = [];
+
+    // Create combinations based on available items
+    if (tops.length > 0 && bottoms.length > 0) {
+      tops.forEach((top, topIndex) => {
+        bottoms.forEach((bottom, bottomIndex) => {
+          if (topIndex < 3 && bottomIndex < 3) { // Limit combinations
+            const outfit = [top, bottom];
+            if (outerwear.length > 0 && Math.random() > 0.5) {
+              outfit.push(outerwear[0]);
+            }
+            outfits.push({
+              id: `wardrobe-${topIndex}-${bottomIndex}`,
+              items: outfit,
+              match: calculateWardrobeMatch(outfit)
+            });
+          }
+        });
+      });
+    }
+
+    if (dresses.length > 0) {
+      dresses.forEach((dress, index) => {
+        if (index < 2) {
+          outfits.push({
+            id: `wardrobe-dress-${index}`,
+            items: [dress],
+            match: calculateWardrobeMatch([dress])
+          });
+        }
+      });
+    }
+
+    return outfits.slice(0, 4); // Limit to 4 outfits
   };
 
-  const recommendations = getOutfitRecommendations();
+  const calculateWardrobeMatch = (items: any[]): number => {
+    let match = 70; // Base score for wardrobe items
+    
+    // Check color matching with user's palette
+    items.forEach(item => {
+      const itemColor = item.products?.color?.toLowerCase() || '';
+      for (const paletteColor of colorPalette) {
+        if (itemColor.includes(paletteColor.toLowerCase()) || 
+            paletteColor.toLowerCase().includes(itemColor)) {
+          match += 10;
+          break;
+        }
+      }
+    });
 
-  const toggleFavorite = (itemId: number) => {
-    setFavorites(prev => 
-      prev.includes(itemId) 
-        ? prev.filter(id => id !== itemId)
-        : [...prev, itemId]
+    return Math.min(match, 95);
+  };
+
+  const calculateMatch = (product: Product): number => {
+    // Simple color matching algorithm based on color similarity
+    const productColor = product.color.toLowerCase();
+    let match = 70; // Base match score
+
+    // Check if product color matches any color in the palette
+    for (const paletteColor of colorPalette) {
+      if (productColor.includes(paletteColor.toLowerCase()) || 
+          paletteColor.toLowerCase().includes(productColor)) {
+        match += 25;
+        break;
+      }
+    }
+
+    // Add bonus for highly rated products
+    if (product.rating && product.rating > 4.5) {
+      match += 5;
+    }
+
+    return Math.min(match, 98); // Cap at 98%
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-20">
+        <TopNavBar 
+          onBack={onBack}
+          onFavorites={() => {}}
+          onCart={() => {}}
+          onProfile={() => {}}
+          showBackButton={true}
+          title="Recommendations"
+        />
+        <div className="max-w-md mx-auto p-4 flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+        </div>
+      </div>
     );
-  };
-
-  const handleAddToCart = (item: any) => {
-    onAddToCart(item);
-    toast({
-      title: "Added to Cart! 🛒",
-      description: `${item.name} has been added to your cart`,
-    });
-  };
-
-  const handleAddToFavorites = (item: any) => {
-    onAddToFavorites(item);
-    toggleFavorite(item.id);
-    toast({
-      title: "Added to Favorites! ❤️",
-      description: `${item.name} has been added to your favorites`,
-    });
-  };
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4">
-      <div className="max-w-md mx-auto space-y-6">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="text-2xl font-bold text-gray-800">Outfit for {occasion}</h1>
-        </div>
-
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-20">
+      <TopNavBar 
+        onBack={onBack}
+        onFavorites={() => {}}
+        onCart={() => {}}
+        onProfile={() => {}}
+        showBackButton={true}
+        title="Recommendations"
+      />
+      
+      <div className="max-w-md mx-auto p-4 space-y-6">
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -128,42 +193,44 @@ const OutfitRecommendations = ({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-gray-600 mb-2">
-              Curated for your <span className="font-semibold">{skinTone}</span> skin tone
-            </p>
-            <div className="flex gap-2 mb-4">
-              {colorPalette.slice(0, 4).map((color, index) => (
-                <div
-                  key={index}
-                  className="w-6 h-6 rounded-full border-2 border-white shadow-sm"
-                  style={{ backgroundColor: color }}
-                />
-              ))}
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">Skin Tone: <span className="font-semibold">{skinTone}</span></p>
+              <div className="flex gap-2">
+                {colorPalette.map((color, index) => (
+                  <div
+                    key={index}
+                    className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
+                    style={{ backgroundColor: color }}
+                    title={color}
+                  />
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Choose Your Style Source</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-600" />
+              Choose Recommendation Source
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="flex gap-2">
               <Button
-                variant={selectedSource === 'wardrobe' ? 'default' : 'outline'}
-                onClick={() => setSelectedSource('wardrobe')}
-                className="h-auto py-4 flex flex-col gap-2"
+                variant={recommendationSource === "wardrobe" ? "default" : "outline"}
+                onClick={() => setRecommendationSource("wardrobe")}
+                className={`flex-1 ${recommendationSource === "wardrobe" ? "bg-purple-600 hover:bg-purple-700" : ""}`}
               >
-                <div className="text-2xl">👗</div>
-                <span>My Wardrobe</span>
+                My Wardrobe ({wardrobeItems.length})
               </Button>
               <Button
-                variant={selectedSource === 'shop' ? 'default' : 'outline'}
-                onClick={() => setSelectedSource('shop')}
-                className="h-auto py-4 flex flex-col gap-2"
+                variant={recommendationSource === "shop" ? "default" : "outline"}
+                onClick={() => setRecommendationSource("shop")}
+                className={`flex-1 ${recommendationSource === "shop" ? "bg-purple-600 hover:bg-purple-700" : ""}`}
               >
-                <div className="text-2xl">🛍️</div>
-                <span>Shop Items</span>
+                Shop Items
               </Button>
             </div>
           </CardContent>
@@ -171,101 +238,148 @@ const OutfitRecommendations = ({
 
         <div className="space-y-4">
           <h2 className="text-xl font-bold text-gray-800">
-            {selectedSource === 'wardrobe' ? 'Wardrobe Combinations' : 'Perfect Outfit Combinations'}
+            {recommendationSource === "wardrobe" ? "From Your Wardrobe" : "Shop Recommendations"}
           </h2>
           
-          {selectedSource === 'wardrobe' ? (
-            <Card className="shadow-lg">
-              <CardContent className="p-8 text-center">
-                <div className="text-6xl mb-4">👗</div>
-                <h3 className="text-lg font-semibold mb-2">Your Wardrobe is Empty</h3>
-                <p className="text-gray-600 mb-4">Add items to your wardrobe to get personalized outfit combinations</p>
-                <Button
-                  variant="outline"
-                  onClick={() => setSelectedSource('shop')}
-                  className="mb-2"
-                >
-                  Browse Shop Items
-                </Button>
-                <p className="text-sm text-gray-500">or add items manually from your closet</p>
-              </CardContent>
-            </Card>
-          ) : (
-            recommendations.map((item) => (
-              <Card key={item.id} className="shadow-lg overflow-hidden">
-                <div className="relative bg-gray-50">
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-full h-48 object-contain"
-                  />
-                  <div className="absolute top-2 right-2 flex gap-2">
-                    <Badge className="bg-green-100 text-green-800">
-                      {item.match}% match
-                    </Badge>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className={`rounded-full ${favorites.includes(item.id) ? 'text-red-500' : 'text-gray-500'} bg-white/80 hover:bg-white`}
-                      onClick={() => handleAddToFavorites(item)}
-                    >
-                      <Heart className={`w-4 h-4 ${favorites.includes(item.id) ? 'fill-current' : ''}`} />
-                    </Button>
-                  </div>
-                </div>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="font-semibold text-gray-800">{item.name}</h3>
-                      <p className="text-sm text-gray-600">{item.brand}</p>
-                      <p className="text-xs text-purple-600 capitalize">{item.type}</p>
-                    </div>
-                    <p className="font-bold text-purple-600">{item.price} EGP</p>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm text-gray-600">4.5</span>
-                    </div>
-                    <div
-                      className="w-4 h-4 rounded-full border"
-                      style={{ backgroundColor: item.color }}
-                      title="Recommended color"
-                    />
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => handleAddToCart(item)}
-                      className="flex-1 bg-purple-600 hover:bg-purple-700"
-                    >
-                      <ShoppingCart className="w-4 h-4 mr-2" />
-                      Add to Cart
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => handleAddToFavorites(item)}
-                    >
-                      <Heart className="w-4 h-4 mr-2" />
-                      Favorites
-                    </Button>
-                  </div>
+          {recommendationSource === "wardrobe" ? (
+            wardrobeOutfits.length > 0 ? (
+              <div className="grid gap-4">
+                {wardrobeOutfits.map((outfit) => (
+                  <Card key={outfit.id} className="shadow-lg overflow-hidden">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-semibold">Wardrobe Combination</h3>
+                        <Badge className="bg-green-100 text-green-800">
+                          {outfit.match}% match
+                        </Badge>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2 mb-4">
+                        {outfit.items.map((item: any, index: number) => (
+                          <div key={index} className="text-center">
+                            <img
+                              src={item.products?.image_url || "/placeholder.svg"}
+                              alt={item.products?.name}
+                              className="w-full h-24 object-cover rounded mb-2"
+                            />
+                            <p className="text-xs font-medium">{item.products?.name}</p>
+                            <p className="text-xs text-gray-500">{item.products?.brand}</p>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <p className="text-sm text-gray-600 mb-3">
+                        Perfect for: {occasion}
+                      </p>
+                      
+                      <p className="text-xs text-green-600 font-medium">
+                        ✨ Already in your wardrobe!
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card className="shadow-lg">
+                <CardContent className="p-6 text-center">
+                  <p className="text-gray-600 mb-4">
+                    No items in your wardrobe yet for outfit combinations
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => setRecommendationSource("shop")}
+                    className="mb-2"
+                  >
+                    Browse Shop Instead
+                  </Button>
                 </CardContent>
               </Card>
-            ))
+            )
+          ) : (
+            <div className="grid gap-4">
+              {products.map((product) => {
+                const match = calculateMatch(product);
+                return (
+                  <Card key={product.id} className="shadow-lg overflow-hidden">
+                    <div className="relative bg-gray-50">
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        className="w-full h-48 object-contain"
+                      />
+                      <div className="absolute top-2 right-2 flex gap-2">
+                        <Badge className="bg-green-100 text-green-800">
+                          {match}% match
+                        </Badge>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="rounded-full text-gray-500 bg-white/80 hover:bg-white"
+                          onClick={() => {}}
+                        >
+                          <Heart className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      {product.original_price && product.original_price > product.price && (
+                        <div className="absolute top-2 left-2">
+                          <Badge variant="destructive">
+                            Sale
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h3 className="font-semibold text-gray-800">{product.name}</h3>
+                          <p className="text-sm text-gray-600">{product.brand}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-purple-600">{product.price} EGP</p>
+                          {product.original_price && product.original_price > product.price && (
+                            <p className="text-sm text-gray-500 line-through">{product.original_price} EGP</p>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                          <span className="text-sm text-gray-600">{product.rating || 4.0}</span>
+                        </div>
+                        <div
+                          className="w-4 h-4 rounded-full border"
+                          style={{ backgroundColor: product.color }}
+                          title="Recommended color"
+                        />
+                        <span className="text-xs text-gray-500">Stock: {product.stock_quantity}</span>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => onAddToCart(product)}
+                          variant="outline"
+                          className="flex-1"
+                        >
+                          <ShoppingCart className="w-4 h-4 mr-2" />
+                          Add to Cart
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            addProductToWardrobe(session?.user?.id || '', product.id);
+                            onShopNow()
+                          }}
+                          className="flex-1 bg-purple-600 hover:bg-purple-700"
+                        >
+                          Buy Now
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           )}
-        </div>
-
-        <div className="space-y-3">
-          <Button
-            onClick={onShopNow}
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 py-6 text-lg"
-            size="lg"
-          >
-            Browse More in Shop
-          </Button>
         </div>
       </div>
     </div>
