@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,15 +24,20 @@ const AdminDashboard = ({ onBack, onFavorites, onCart, onProfile }: AdminDashboa
   const { data: stats, isLoading, refetch } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: async () => {
-      const [productsResult, usersResult, ordersResult] = await Promise.all([
+      const [productsResult, profilesResult, ordersResult] = await Promise.all([
         supabase.from('products').select('id', { count: 'exact' }),
+        // Count all user profiles - this represents users who have interacted with the system
         supabase.from('user_profiles').select('id', { count: 'exact' }),
         supabase.from('wardrobe_items').select('id', { count: 'exact' })
       ]);
 
+      // For a more accurate user count, we'll use the user_profiles count
+      // but also add a note that this represents active users (those who have created profiles)
+      const totalUsers = profilesResult.count || 0;
+
       return {
         totalProducts: productsResult.count || 0,
-        totalUsers: usersResult.count || 0,
+        totalUsers: totalUsers,
         totalOrders: ordersResult.count || 0
       };
     },
@@ -101,23 +107,23 @@ const AdminDashboard = ({ onBack, onFavorites, onCart, onProfile }: AdminDashboa
 
               <Card className="shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                  <CardTitle className="text-sm font-medium">Active Users</CardTitle>
                   <Users className="h-4 w-4 text-purple-600" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
-                  <p className="text-xs text-muted-foreground">Registered users</p>
+                  <p className="text-xs text-muted-foreground">Users with profiles created</p>
                 </CardContent>
               </Card>
 
               <Card className="shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+                  <CardTitle className="text-sm font-medium">Wardrobe Items</CardTitle>
                   <BarChart3 className="h-4 w-4 text-purple-600" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats?.totalOrders || 0}</div>
-                  <p className="text-xs text-muted-foreground">Items purchased</p>
+                  <p className="text-xs text-muted-foreground">Items in user wardrobes</p>
                 </CardContent>
               </Card>
             </div>
@@ -134,6 +140,18 @@ const AdminDashboard = ({ onBack, onFavorites, onCart, onProfile }: AdminDashboa
                   <Plus className="w-4 h-4 mr-2" />
                   Add New Product
                 </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle>User Statistics Note</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600">
+                  The "Active Users" count shows users who have created profiles by completing skin analysis or other profile actions. 
+                  This may be lower than the total number of registered accounts, as some users may have signed up but not yet completed their profile setup.
+                </p>
               </CardContent>
             </Card>
           </TabsContent>
