@@ -13,6 +13,7 @@ interface OutfitRecommendationsProps {
   occasion: string;
   skinTone: string;
   colorPalette: string[];
+  recommendationSource: "wardrobe" | "shop";
   onBack: () => void;
   onAddToCart: (item: any) => void;
   onAddToFavorites: (item: any) => void;
@@ -23,12 +24,12 @@ const OutfitRecommendations = ({
   occasion, 
   skinTone, 
   colorPalette, 
+  recommendationSource,
   onBack, 
   onAddToCart, 
   onAddToFavorites, 
   onShopNow 
 }: OutfitRecommendationsProps) => {
-  const [recommendationSource, setRecommendationSource] = useState<"wardrobe" | "shop">("shop");
   const [wardrobeOutfits, setWardrobeOutfits] = useState<any[]>([]);
 
   const { toast } = useToast();
@@ -213,34 +214,15 @@ const OutfitRecommendations = ({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-purple-600" />
-              Choose Recommendation Source
+              {recommendationSource === "wardrobe" ? "From Your Wardrobe" : "Shop Recommendations"}
             </CardTitle>
+            <p className="text-sm text-gray-600">
+              Perfect for: <span className="font-semibold capitalize">{occasion}</span>
+            </p>
           </CardHeader>
-          <CardContent>
-            <div className="flex gap-2">
-              <Button
-                variant={recommendationSource === "wardrobe" ? "default" : "outline"}
-                onClick={() => setRecommendationSource("wardrobe")}
-                className={`flex-1 ${recommendationSource === "wardrobe" ? "bg-purple-600 hover:bg-purple-700" : ""}`}
-              >
-                My Wardrobe ({wardrobeItems.length})
-              </Button>
-              <Button
-                variant={recommendationSource === "shop" ? "default" : "outline"}
-                onClick={() => setRecommendationSource("shop")}
-                className={`flex-1 ${recommendationSource === "shop" ? "bg-purple-600 hover:bg-purple-700" : ""}`}
-              >
-                Shop Items
-              </Button>
-            </div>
-          </CardContent>
         </Card>
 
         <div className="space-y-4">
-          <h2 className="text-xl font-bold text-gray-800">
-            {recommendationSource === "wardrobe" ? "From Your Wardrobe" : "Shop Recommendations"}
-          </h2>
-          
           {recommendationSource === "wardrobe" ? (
             wardrobeOutfits.length > 0 ? (
               <div className="grid gap-4">
@@ -287,7 +269,7 @@ const OutfitRecommendations = ({
                   </p>
                   <Button
                     variant="outline"
-                    onClick={() => setRecommendationSource("shop")}
+                    onClick={onShopNow}
                     className="mb-2"
                   >
                     Browse Shop Instead

@@ -25,6 +25,7 @@ const Index = () => {
   const [navigationHistory, setNavigationHistory] = useState<string[]>(["home"]);
   const [skinData, setSkinData] = useState<{skinTone: string; palette: string[]} | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+  const [selectedSource, setSelectedSource] = useState<"wardrobe" | "shop" | null>(null);
   const [showSignUp, setShowSignUp] = useState(false);
   const [guestSkinData, setGuestSkinData] = useState<{skinTone: string; palette: string[]} | null>(null);
   const [userHasSavedAnalysis, setUserHasSavedAnalysis] = useState(false);
@@ -175,16 +176,17 @@ const Index = () => {
     changeView("styleSelector");
   };
 
-  const handleStyleSelected = (occasion: string) => {
-    console.log('Index - handleStyleSelected called with:', occasion);
+  const handleStyleSelected = (occasion: string, source: "wardrobe" | "shop") => {
+    console.log('Index - handleStyleSelected called with:', occasion, source);
     console.log('Index - Current selectedStyle before update:', selectedStyle);
     setSelectedStyle(occasion);
-    console.log('Index - Updated selectedStyle to:', occasion);
+    setSelectedSource(source);
+    console.log('Index - Updated selectedStyle to:', occasion, 'and source to:', source);
     console.log('Index - About to navigate to outfitRecommendations');
     
     // Force a small delay to ensure state is updated
     setTimeout(() => {
-      console.log('Index - Actually navigating to outfitRecommendations with style:', occasion);
+      console.log('Index - Actually navigating to outfitRecommendations with style:', occasion, 'source:', source);
       changeView("outfitRecommendations");
     }, 100);
   };
@@ -302,6 +304,7 @@ const Index = () => {
   const renderCurrentView = () => {
     console.log('Index - renderCurrentView - Current view:', currentView);
     console.log('Index - renderCurrentView - Selected style:', selectedStyle);
+    console.log('Index - renderCurrentView - Selected source:', selectedSource);
     console.log('Index - renderCurrentView - Current skin data:', currentSkinData);
     
     switch (currentView) {
@@ -326,10 +329,10 @@ const Index = () => {
           />
         );
       case "outfitRecommendations":
-        console.log('Index - Rendering outfitRecommendations with style:', selectedStyle);
+        console.log('Index - Rendering outfitRecommendations with style:', selectedStyle, 'source:', selectedSource);
         console.log('Index - Current skin data for recommendations:', currentSkinData);
-        if (!selectedStyle || !currentSkinData) {
-          console.log('Index - Missing data - selectedStyle:', selectedStyle, 'currentSkinData:', currentSkinData);
+        if (!selectedStyle || !selectedSource || !currentSkinData) {
+          console.log('Index - Missing data - selectedStyle:', selectedStyle, 'selectedSource:', selectedSource, 'currentSkinData:', currentSkinData);
           console.log('Index - Redirecting back to styleSelector');
           changeView("styleSelector");
           return null;
@@ -340,6 +343,7 @@ const Index = () => {
             occasion={selectedStyle}
             skinTone={currentSkinData.skinTone}
             colorPalette={currentSkinData.palette}
+            recommendationSource={selectedSource}
             onBack={goBack}
             onAddToCart={handleAddToCart}
             onAddToFavorites={handleAddToFavorites}
