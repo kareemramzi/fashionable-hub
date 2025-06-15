@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Eye, EyeOff, Sparkles, Zap } from "lucide-react";
+import { Eye, EyeOff, Sparkles, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -59,21 +59,11 @@ const SignIn = ({ onBack, onSignUpClick, onSignInSuccess }: SignInProps) => {
       </div>
 
       <div className="relative z-10 max-w-md mx-auto space-y-6 p-4">
-        <div className="flex items-center gap-4 mb-6 pt-6">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={onBack}
-            className="bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all duration-300 hover:scale-110"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div className="flex-1 text-center">
-            <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-600 via-purple-600 to-cyan-600">
-              Welcome Back!
-            </h1>
-            <p className="text-gray-600 text-sm">Ready to continue your glow up journey?</p>
-          </div>
+        <div className="text-center mb-6 pt-6">
+          <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-600 via-purple-600 to-cyan-600">
+            Welcome Back!
+          </h1>
+          <p className="text-gray-600 text-sm">Ready to continue your glow up journey?</p>
         </div>
 
         <Card className="shadow-2xl bg-white/80 backdrop-blur-xl border border-white/30">
