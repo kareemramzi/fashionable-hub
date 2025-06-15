@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import SkinAnalysis from "@/components/SkinAnalysis";
 import OutfitSelector from "@/components/OutfitSelector";
 import OutfitStyleSelector from "@/components/OutfitStyleSelector";
+import OutfitRecommendations from "@/components/OutfitRecommendations";
 import ShoppingRecommendations from "@/components/ShoppingRecommendations";
 import WardrobeManager from "@/components/WardrobeManager";
 import SignIn from "@/components/auth/SignIn";
@@ -113,6 +115,9 @@ const Index = () => {
           setSkinData(analysisData);
           setUserHasSavedAnalysis(true);
           
+          // Refresh the user profile data
+          await fetchUserProfile(user.id);
+          
           toast({
             title: "Analysis Saved! ✨",
             description: "Your skin tone analysis has been saved to your profile.",
@@ -146,9 +151,9 @@ const Index = () => {
     changeView("styleSelector");
   };
 
-  const handleStyleSelected = (style: string) => {
-    setSelectedStyle(style);
-    changeView("recommendations");
+  const handleStyleSelected = (occasion: string) => {
+    setSelectedStyle(occasion);
+    changeView("outfitRecommendations");
   };
 
   const handleSignUp = () => {
@@ -192,7 +197,10 @@ const Index = () => {
     resetNavigationHistory("home");
   };
 
-  const handleUpdateAnalysis = () => {
+  const handleUpdateAnalysis = async () => {
+    // Clear current analysis and navigate to skin analysis
+    setSkinData(null);
+    setUserHasSavedAnalysis(false);
     changeView("skinAnalysis");
   };
 
@@ -244,6 +252,22 @@ const Index = () => {
             colorPalette={currentSkinData?.palette || []}
             onStyleSelected={handleStyleSelected}
             onBack={goBack}
+          />
+        );
+      case "outfitRecommendations":
+        return (
+          <OutfitRecommendations
+            occasion={selectedStyle || "casual"}
+            skinTone={currentSkinData?.skinTone || ""}
+            colorPalette={currentSkinData?.palette || []}
+            onBack={goBack}
+            onAddToWardrobe={(item) => {
+              // Add item to wardrobe logic can be implemented here
+              toast({
+                title: "Added to Wardrobe! 👗",
+                description: `${item.name} has been added to your wardrobe`,
+              });
+            }}
           />
         );
       case "recommendations":

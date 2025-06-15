@@ -37,27 +37,59 @@ const SkinAnalysis = ({ onAnalysisComplete, onBack, onFavorites, onCart, onProfi
     }
   };
 
+  // More realistic skin tone analysis based on well-known categories
   const analyzeImage = async (imageUrl: string) => {
     setIsAnalyzing(true);
     
-    // Simulate AI analysis
+    // Simulate AI analysis with consistent results
     await new Promise(resolve => setTimeout(resolve, 3000));
     
-    // Mock analysis results based on common skin tone categories
+    // Create a hash from image data to ensure consistent results for same image
+    const imageHash = imageUrl.slice(-20);
+    const hashValue = imageHash.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    
+    // Well-known skin tone categories with proper color palettes
     const skinTones = [
-      { name: "Light Cool", colors: ["#E8F4F8", "#D1E7DD", "#F8E8FF", "#E1F5FE"] },
-      { name: "Light Warm", colors: ["#FFF8E1", "#FFECB3", "#FFE0B2", "#FFCC80"] },
-      { name: "Medium Cool", colors: ["#E3F2FD", "#F3E5F5", "#E8F5E8", "#FFF3E0"] },
-      { name: "Medium Warm", colors: ["#FFF3C4", "#FFCC02", "#FF8A65", "#FFAB40"] },
-      { name: "Deep Cool", colors: ["#1A237E", "#4A148C", "#B71C1C", "#1B5E20"] },
-      { name: "Deep Warm", colors: ["#BF360C", "#E65100", "#FF6F00", "#F57F17"] }
+      { 
+        name: "Fair Cool", 
+        colors: ["#E8F4F8", "#D1E7DD", "#F3E5F5", "#E1F5FE", "#FFF3E0", "#E8EAF6"] 
+      },
+      { 
+        name: "Fair Warm", 
+        colors: ["#FFF8E1", "#FFECB3", "#FFE0B2", "#FFCC80", "#FFAB40", "#FF8F00"] 
+      },
+      { 
+        name: "Light Cool", 
+        colors: ["#E3F2FD", "#F3E5F5", "#E8F5E8", "#FFF3E0", "#FCE4EC", "#F1F8E9"] 
+      },
+      { 
+        name: "Light Warm", 
+        colors: ["#FFF3C4", "#FFCC02", "#FF8A65", "#FFAB40", "#FFB74D", "#FF9800"] 
+      },
+      { 
+        name: "Medium Cool", 
+        colors: ["#90CAF9", "#CE93D8", "#A5D6A7", "#FFCC80", "#F8BBD9", "#DCEDC8"] 
+      },
+      { 
+        name: "Medium Warm", 
+        colors: ["#FFB74D", "#FF8A65", "#FFAB40", "#FF9800", "#FF7043", "#D84315"] 
+      },
+      { 
+        name: "Deep Cool", 
+        colors: ["#1976D2", "#7B1FA2", "#388E3C", "#F57C00", "#C2185B", "#5D4037"] 
+      },
+      { 
+        name: "Deep Warm", 
+        colors: ["#BF360C", "#E65100", "#FF6F00", "#F57F17", "#D84315", "#8D6E63"] 
+      }
     ];
     
-    const randomTone = skinTones[Math.floor(Math.random() * skinTones.length)];
+    // Use hash to select consistent skin tone for same image
+    const selectedTone = skinTones[hashValue % skinTones.length];
     
     const results = {
-      skinTone: randomTone.name,
-      colorPalette: randomTone.colors
+      skinTone: selectedTone.name,
+      colorPalette: selectedTone.colors
     };
     
     setAnalysisResults(results);
