@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Camera, ArrowLeft, Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import SkinAnalysisResults from "./SkinAnalysisResults";
 
 interface SkinAnalysisProps {
   onAnalysisComplete: (skinTone: string, palette: string[]) => void;
@@ -13,6 +14,11 @@ interface SkinAnalysisProps {
 const SkinAnalysis = ({ onAnalysisComplete, onBack }: SkinAnalysisProps) => {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [analysisResults, setAnalysisResults] = useState<{
+    skinTone: string;
+    palette: string[];
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,10 +55,29 @@ const SkinAnalysis = ({ onAnalysisComplete, onBack }: SkinAnalysisProps) => {
     
     const palette = colorPalettes[randomSkinTone as keyof typeof colorPalettes] || colorPalettes.Medium;
     
+    setAnalysisResults({ skinTone: randomSkinTone, palette });
     setIsAnalyzing(false);
+    setShowResults(true);
     toast.success(`Skin tone analyzed: ${randomSkinTone}`);
-    onAnalysisComplete(randomSkinTone, palette);
   };
+
+  const handleContinue = () => {
+    if (analysisResults) {
+      onAnalysisComplete(analysisResults.skinTone, analysisResults.palette);
+    }
+  };
+
+  if (showResults && analysisResults && capturedImage) {
+    return (
+      <SkinAnalysisResults
+        onBack={() => setShowResults(false)}
+        onContinue={handleContinue}
+        skinTone={analysisResults.skinTone}
+        colorPalette={analysisResults.palette}
+        capturedImage={capturedImage}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4">

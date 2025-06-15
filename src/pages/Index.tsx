@@ -11,10 +11,11 @@ import SignIn from "@/components/auth/SignIn";
 import SignUp from "@/components/auth/SignUp";
 import UserProfile from "@/components/profile/UserProfile";
 import ShoppingCartComponent from "@/components/cart/ShoppingCart";
+import FavoritesList from "@/components/FavoritesList";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-type AppScreen = 'home' | 'skin-analysis' | 'outfit-selector' | 'wardrobe' | 'shopping' | 'signin' | 'signup' | 'profile' | 'cart';
+type AppScreen = 'home' | 'skin-analysis' | 'outfit-selector' | 'wardrobe' | 'shopping' | 'signin' | 'signup' | 'profile' | 'cart' | 'favorites';
 
 const Index = () => {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('home');
@@ -121,6 +122,12 @@ const Index = () => {
             }}
           />
         );
+      case 'favorites':
+        return (
+          <FavoritesList 
+            onBack={() => setCurrentScreen('home')}
+          />
+        );
       case 'skin-analysis':
         return (
           <SkinAnalysis 
@@ -187,6 +194,14 @@ const Index = () => {
                 <div className="flex gap-2">
                   {isAuthenticated ? (
                     <>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => setCurrentScreen('favorites')}
+                        className="bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all duration-300 hover:scale-110"
+                      >
+                        <Heart className="w-5 h-5 text-pink-600" />
+                      </Button>
                       <Button 
                         variant="ghost" 
                         size="icon"
