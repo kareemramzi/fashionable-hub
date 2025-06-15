@@ -127,6 +127,7 @@ const Index = () => {
     if (user) {
       // User is authenticated - save to database
       try {
+        console.log('Saving user profile for user:', user.id);
         const success = await saveUserProfile(user.id, skinTone, palette);
         
         if (success) {
@@ -141,18 +142,23 @@ const Index = () => {
             description: "Your skin tone analysis has been saved to your profile.",
           });
         } else {
+          // Still set the data locally even if save failed
           setSkinData(analysisData);
+          console.error('Failed to save user profile');
           toast({
-            title: "Analysis Complete! ✨",
-            description: "Your skin tone analysis is ready, but couldn't be saved.",
+            title: "Analysis Complete! ✨", 
+            description: "Your skin tone analysis is ready. Please try again to save it to your profile.",
+            variant: "destructive",
           });
         }
       } catch (error) {
         console.error('Error in handleAnalysisComplete:', error);
+        // Still set the data locally even if save failed
         setSkinData(analysisData);
         toast({
           title: "Analysis Complete! ✨",
-          description: "Your skin tone analysis is ready.",
+          description: "Your skin tone analysis is ready. There was an error saving to your profile.",
+          variant: "destructive",
         });
       }
     } else {

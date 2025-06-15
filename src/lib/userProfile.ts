@@ -23,6 +23,10 @@ export const getUserProfile = async (userId: string) => {
 
 export const saveUserProfile = async (userId: string, skinTone: string, colorPalette: string[]) => {
   try {
+    console.log('Attempting to save profile for user:', userId);
+    console.log('Skin tone:', skinTone);
+    console.log('Color palette:', colorPalette);
+    
     const { error } = await supabase
       .from('user_profiles')
       .upsert({
@@ -33,10 +37,11 @@ export const saveUserProfile = async (userId: string, skinTone: string, colorPal
       });
 
     if (error) {
-      console.error('Error saving user profile:', error);
+      console.error('Supabase error saving user profile:', error);
       return false;
     }
 
+    console.log('Profile saved successfully');
     return true;
   } catch (error) {
     console.error('Error in saveUserProfile:', error);
