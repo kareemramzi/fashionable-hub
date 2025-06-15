@@ -14,9 +14,10 @@ interface WardrobeManagerProps {
   };
   onProceedToShopping: () => void;
   onBack: () => void;
+  onProfile: () => void;
 }
 
-const WardrobeManager = ({ userProfile, onProceedToShopping, onBack }: WardrobeManagerProps) => {
+const WardrobeManager = ({ userProfile, onProceedToShopping, onBack, onProfile }: WardrobeManagerProps) => {
   const [activeTab, setActiveTab] = useState("combinations");
 
   // Mock wardrobe items

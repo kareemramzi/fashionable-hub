@@ -9,9 +9,11 @@ interface OutfitSelectorProps {
   colorPalette: string[];
   onOutfitSelected: (outfitType: string) => void;
   onBack: () => void;
+  onFavorites: () => void;
+  onProfile: () => void;
 }
 
-const OutfitSelector = ({ skinTone, colorPalette, onOutfitSelected, onBack }: OutfitSelectorProps) => {
+const OutfitSelector = ({ skinTone, colorPalette, onOutfitSelected, onBack, onFavorites, onProfile }: OutfitSelectorProps) => {
   const [selectedOutfit, setSelectedOutfit] = useState<string | null>(null);
 
   const outfitTypes = [
