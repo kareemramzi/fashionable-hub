@@ -11,7 +11,8 @@ interface OutfitRecommendationsProps {
   skinTone: string;
   colorPalette: string[];
   onBack: () => void;
-  onAddToWardrobe: (item: any) => void;
+  onAddToCart: (item: any) => void;
+  onAddToFavorites: (item: any) => void;
   onShopNow: () => void;
 }
 
@@ -20,10 +21,12 @@ const OutfitRecommendations = ({
   skinTone, 
   colorPalette, 
   onBack, 
-  onAddToWardrobe,
+  onAddToCart,
+  onAddToFavorites,
   onShopNow 
 }: OutfitRecommendationsProps) => {
   const [favorites, setFavorites] = useState<number[]>([]);
+  const [selectedSource, setSelectedSource] = useState<'wardrobe' | 'shop'>('shop');
   const { toast } = useToast();
 
   // Generate outfit recommendations based on occasion and skin tone
@@ -90,11 +93,20 @@ const OutfitRecommendations = ({
     );
   };
 
-  const handleAddToWardrobe = (item: any) => {
-    onAddToWardrobe(item);
+  const handleAddToCart = (item: any) => {
+    onAddToCart(item);
     toast({
-      title: "Added to Wardrobe! 👗",
-      description: `${item.name} has been added to your wardrobe`,
+      title: "Added to Cart! 🛒",
+      description: `${item.name} has been added to your cart`,
+    });
+  };
+
+  const handleAddToFavorites = (item: any) => {
+    onAddToFavorites(item);
+    toggleFavorite(item.id);
+    toast({
+      title: "Added to Favorites! ❤️",
+      description: `${item.name} has been added to your favorites`,
     });
   };
 
@@ -131,70 +143,119 @@ const OutfitRecommendations = ({
           </CardContent>
         </Card>
 
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle>Choose Your Style Source</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                variant={selectedSource === 'wardrobe' ? 'default' : 'outline'}
+                onClick={() => setSelectedSource('wardrobe')}
+                className="h-auto py-4 flex flex-col gap-2"
+              >
+                <div className="text-2xl">👗</div>
+                <span>My Wardrobe</span>
+              </Button>
+              <Button
+                variant={selectedSource === 'shop' ? 'default' : 'outline'}
+                onClick={() => setSelectedSource('shop')}
+                className="h-auto py-4 flex flex-col gap-2"
+              >
+                <div className="text-2xl">🛍️</div>
+                <span>Shop Items</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="space-y-4">
-          <h2 className="text-xl font-bold text-gray-800">Perfect Outfit Combinations</h2>
-          {recommendations.map((item) => (
-            <Card key={item.id} className="shadow-lg overflow-hidden">
-              <div className="relative bg-gray-50">
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  className="w-full h-48 object-contain"
-                />
-                <div className="absolute top-2 right-2 flex gap-2">
-                  <Badge className="bg-green-100 text-green-800">
-                    {item.match}% match
-                  </Badge>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className={`rounded-full ${favorites.includes(item.id) ? 'text-red-500' : 'text-gray-500'} bg-white/80 hover:bg-white`}
-                    onClick={() => toggleFavorite(item.id)}
-                  >
-                    <Heart className={`w-4 h-4 ${favorites.includes(item.id) ? 'fill-current' : ''}`} />
-                  </Button>
-                </div>
-              </div>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <h3 className="font-semibold text-gray-800">{item.name}</h3>
-                    <p className="text-sm text-gray-600">{item.brand}</p>
-                    <p className="text-xs text-purple-600 capitalize">{item.type}</p>
-                  </div>
-                  <p className="font-bold text-purple-600">${item.price}</p>
-                </div>
-                
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="text-sm text-gray-600">4.5</span>
-                  </div>
-                  <div
-                    className="w-4 h-4 rounded-full border"
-                    style={{ backgroundColor: item.color }}
-                    title="Recommended color"
-                  />
-                </div>
-                
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => handleAddToWardrobe(item)}
-                    className="flex-1 bg-purple-600 hover:bg-purple-700"
-                  >
-                    Add to Wardrobe
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    Buy Now
-                  </Button>
-                </div>
+          <h2 className="text-xl font-bold text-gray-800">
+            {selectedSource === 'wardrobe' ? 'Wardrobe Combinations' : 'Perfect Outfit Combinations'}
+          </h2>
+          
+          {selectedSource === 'wardrobe' ? (
+            <Card className="shadow-lg">
+              <CardContent className="p-8 text-center">
+                <div className="text-6xl mb-4">👗</div>
+                <h3 className="text-lg font-semibold mb-2">Your Wardrobe is Empty</h3>
+                <p className="text-gray-600 mb-4">Add items to your wardrobe to get personalized outfit combinations</p>
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedSource('shop')}
+                  className="mb-2"
+                >
+                  Browse Shop Items
+                </Button>
+                <p className="text-sm text-gray-500">or add items manually from your closet</p>
               </CardContent>
             </Card>
-          ))}
+          ) : (
+            recommendations.map((item) => (
+              <Card key={item.id} className="shadow-lg overflow-hidden">
+                <div className="relative bg-gray-50">
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-full h-48 object-contain"
+                  />
+                  <div className="absolute top-2 right-2 flex gap-2">
+                    <Badge className="bg-green-100 text-green-800">
+                      {item.match}% match
+                    </Badge>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className={`rounded-full ${favorites.includes(item.id) ? 'text-red-500' : 'text-gray-500'} bg-white/80 hover:bg-white`}
+                      onClick={() => handleAddToFavorites(item)}
+                    >
+                      <Heart className={`w-4 h-4 ${favorites.includes(item.id) ? 'fill-current' : ''}`} />
+                    </Button>
+                  </div>
+                </div>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h3 className="font-semibold text-gray-800">{item.name}</h3>
+                      <p className="text-sm text-gray-600">{item.brand}</p>
+                      <p className="text-xs text-purple-600 capitalize">{item.type}</p>
+                    </div>
+                    <p className="font-bold text-purple-600">${item.price}</p>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-1">
+                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      <span className="text-sm text-gray-600">4.5</span>
+                    </div>
+                    <div
+                      className="w-4 h-4 rounded-full border"
+                      style={{ backgroundColor: item.color }}
+                      title="Recommended color"
+                    />
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => handleAddToCart(item)}
+                      className="flex-1 bg-purple-600 hover:bg-purple-700"
+                    >
+                      <ShoppingCart className="w-4 h-4 mr-2" />
+                      Add to Cart
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => handleAddToFavorites(item)}
+                    >
+                      <Heart className="w-4 h-4 mr-2" />
+                      Favorites
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
 
         <div className="space-y-3">

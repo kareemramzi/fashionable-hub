@@ -279,6 +279,20 @@ const Index = () => {
     );
   }
 
+  const handleAddToCart = (item: any) => {
+    toast({
+      title: "Added to Cart! 🛒",
+      description: `${item.name} has been added to your cart`,
+    });
+  };
+
+  const handleAddToFavorites = (item: any) => {
+    toast({
+      title: "Added to Favorites! ❤️",
+      description: `${item.name} has been added to your favorites`,
+    });
+  };
+
   const renderCurrentView = () => {
     console.log('Index - renderCurrentView - Current view:', currentView);
     console.log('Index - renderCurrentView - Selected style:', selectedStyle);
@@ -321,12 +335,8 @@ const Index = () => {
             skinTone={currentSkinData.skinTone}
             colorPalette={currentSkinData.palette}
             onBack={goBack}
-            onAddToWardrobe={(item) => {
-              toast({
-                title: "Added to Wardrobe! 👗",
-                description: `${item.name} has been added to your wardrobe`,
-              });
-            }}
+            onAddToCart={handleAddToCart}
+            onAddToFavorites={handleAddToFavorites}
             onShopNow={() => changeView("recommendations")}
           />
         );
