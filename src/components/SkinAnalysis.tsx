@@ -2,10 +2,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Camera, Upload, Sparkles } from "lucide-react";
+import { Camera, Upload, Sparkles, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import SkinAnalysisResults from "./SkinAnalysisResults";
 import TopNavBar from "./navigation/TopNavBar";
+import { analyzeSkinTone } from "@/lib/skinToneAnalysis";
 
 interface SkinAnalysisProps {
   onAnalysisComplete: (skinTone: string, palette: string[]) => void;
@@ -21,12 +22,35 @@ const SkinAnalysis = ({ onAnalysisComplete, onBack, onFavorites, onCart, onProfi
   const [analysisResults, setAnalysisResults] = useState<{
     skinTone: string;
     colorPalette: string[];
+    confidence: number;
+    dominantColors: string[];
   } | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload an image file (JPG, PNG, etc.)",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please choose an image smaller than 10MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (e) => {
         const imageUrl = e.target?.result as string;
@@ -37,74 +61,51 @@ const SkinAnalysis = ({ onAnalysisComplete, onBack, onFavorites, onCart, onProfi
     }
   };
 
-  // More realistic skin tone analysis based on well-known categories
   const analyzeImage = async (imageUrl: string) => {
     setIsAnalyzing(true);
+    setAnalysisError(null);
     
-    // Simulate AI analysis with consistent results
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    // Create a hash from image data to ensure consistent results for same image
-    const imageHash = imageUrl.slice(-20);
-    const hashValue = imageHash.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    
-    // Well-known skin tone categories with proper color palettes
-    const skinTones = [
-      { 
-        name: "Fair Cool", 
-        colors: ["#E8F4F8", "#D1E7DD", "#F3E5F5", "#E1F5FE", "#FFF3E0", "#E8EAF6"] 
-      },
-      { 
-        name: "Fair Warm", 
-        colors: ["#FFF8E1", "#FFECB3", "#FFE0B2", "#FFCC80", "#FFAB40", "#FF8F00"] 
-      },
-      { 
-        name: "Light Cool", 
-        colors: ["#E3F2FD", "#F3E5F5", "#E8F5E8", "#FFF3E0", "#FCE4EC", "#F1F8E9"] 
-      },
-      { 
-        name: "Light Warm", 
-        colors: ["#FFF3C4", "#FFCC02", "#FF8A65", "#FFAB40", "#FFB74D", "#FF9800"] 
-      },
-      { 
-        name: "Medium Cool", 
-        colors: ["#90CAF9", "#CE93D8", "#A5D6A7", "#FFCC80", "#F8BBD9", "#DCEDC8"] 
-      },
-      { 
-        name: "Medium Warm", 
-        colors: ["#FFB74D", "#FF8A65", "#FFAB40", "#FF9800", "#FF7043", "#D84315"] 
-      },
-      { 
-        name: "Deep Cool", 
-        colors: ["#1976D2", "#7B1FA2", "#388E3C", "#F57C00", "#C2185B", "#5D4037"] 
-      },
-      { 
-        name: "Deep Warm", 
-        colors: ["#BF360C", "#E65100", "#FF6F00", "#F57F17", "#D84315", "#8D6E63"] 
+    try {
+      console.log('Starting skin tone analysis...');
+      const results = await analyzeSkinTone(imageUrl);
+      
+      console.log('Analysis results:', results);
+      setAnalysisResults(results);
+      
+      if (results.confidence < 60) {
+        toast({
+          title: "Analysis Complete with Low Confidence",
+          description: `Detected ${results.skinTone} with ${results.confidence}% confidence. Consider retaking the photo in better lighting.`,
+        });
+      } else {
+        toast({
+          title: "Analysis Complete! ✨",
+          description: `Your skin tone is ${results.skinTone} with ${results.confidence}% confidence.`,
+        });
       }
-    ];
-    
-    // Use hash to select consistent skin tone for same image
-    const selectedTone = skinTones[hashValue % skinTones.length];
-    
-    const results = {
-      skinTone: selectedTone.name,
-      colorPalette: selectedTone.colors
-    };
-    
-    setAnalysisResults(results);
-    setIsAnalyzing(false);
-    
-    toast({
-      title: "Analysis Complete! ✨",
-      description: `Your skin tone is ${results.skinTone}. Perfect colors selected for you!`,
-    });
+    } catch (error) {
+      console.error('Skin tone analysis failed:', error);
+      setAnalysisError(error instanceof Error ? error.message : 'Analysis failed');
+      toast({
+        title: "Analysis Failed",
+        description: "Unable to analyze the image. Please try with a clearer photo with good lighting.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleContinue = () => {
     if (analysisResults) {
       onAnalysisComplete(analysisResults.skinTone, analysisResults.colorPalette);
     }
+  };
+
+  const handleRetry = () => {
+    setUploadedImage(null);
+    setAnalysisResults(null);
+    setAnalysisError(null);
   };
 
   if (analysisResults && uploadedImage) {
@@ -122,10 +123,9 @@ const SkinAnalysis = ({ onAnalysisComplete, onBack, onFavorites, onCart, onProfi
           capturedImage={uploadedImage}
           skinTone={analysisResults.skinTone}
           colorPalette={analysisResults.colorPalette}
-          onBack={() => {
-            setUploadedImage(null);
-            setAnalysisResults(null);
-          }}
+          confidence={analysisResults.confidence}
+          dominantColors={analysisResults.dominantColors}
+          onBack={handleRetry}
           onContinue={handleContinue}
         />
       </div>
@@ -149,10 +149,10 @@ const SkinAnalysis = ({ onAnalysisComplete, onBack, onFavorites, onCart, onProfi
             <CardTitle className="flex items-center justify-center gap-3">
               <Camera className="w-8 h-8 text-purple-600" />
               <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                Discover Your Glow
+                AI Skin Analysis
               </span>
             </CardTitle>
-            <p className="text-gray-600">Upload a clear photo of your face in natural lighting</p>
+            <p className="text-gray-600">Upload a clear photo for accurate skin tone analysis</p>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="text-center">
@@ -162,13 +162,18 @@ const SkinAnalysis = ({ onAnalysisComplete, onBack, onFavorites, onCart, onProfi
                 onChange={handleImageUpload}
                 className="hidden"
                 id="image-upload"
+                disabled={isAnalyzing}
               />
               <label
                 htmlFor="image-upload"
-                className="inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-4 rounded-xl font-bold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer"
+                className={`inline-flex items-center gap-3 ${
+                  isAnalyzing 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 cursor-pointer hover:scale-105'
+                } text-white px-8 py-4 rounded-xl font-bold shadow-xl hover:shadow-2xl transition-all duration-300`}
               >
                 <Upload className="w-6 h-6" />
-                Take or Upload Photo
+                {isAnalyzing ? 'Analyzing...' : 'Take or Upload Photo'}
               </label>
             </div>
 
@@ -180,24 +185,51 @@ const SkinAnalysis = ({ onAnalysisComplete, onBack, onFavorites, onCart, onProfi
                   <Sparkles className="absolute inset-0 m-auto w-8 h-8 text-purple-600 animate-pulse" />
                 </div>
                 <div className="space-y-2">
-                  <p className="font-semibold text-purple-600">Analyzing your glow...</p>
+                  <p className="font-semibold text-purple-600">AI analyzing your skin tone...</p>
                   <p className="text-sm text-gray-600">
-                    ✨ Detecting skin tone<br/>
-                    🎨 Finding perfect colors<br/>
+                    ✨ Processing image<br/>
+                    🔍 Detecting skin pixels<br/>
+                    🎨 Analyzing undertones<br/>
                     💫 Creating your palette
                   </p>
                 </div>
               </div>
             )}
 
+            {analysisError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 text-red-700 mb-2">
+                  <AlertCircle className="w-5 h-5" />
+                  <h3 className="font-semibold">Analysis Failed</h3>
+                </div>
+                <p className="text-sm text-red-600 mb-3">{analysisError}</p>
+                <Button 
+                  onClick={handleRetry} 
+                  variant="outline" 
+                  size="sm"
+                  className="border-red-300 text-red-700 hover:bg-red-50"
+                >
+                  Try Again
+                </Button>
+              </div>
+            )}
+
             <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-              <h3 className="font-semibold text-purple-800 mb-2">📸 Tips for best results:</h3>
+              <h3 className="font-semibold text-purple-800 mb-2">📸 For best results:</h3>
               <ul className="text-sm text-purple-700 space-y-1">
-                <li>• Use natural daylight (avoid harsh shadows)</li>
-                <li>• Face the camera directly</li>
-                <li>• Remove makeup if possible</li>
-                <li>• Ensure good image quality</li>
+                <li>• Use natural daylight (avoid artificial lighting)</li>
+                <li>• Face the camera directly with clear skin visible</li>
+                <li>• Remove makeup if possible for accurate analysis</li>
+                <li>• Ensure the image is clear and well-lit</li>
+                <li>• Include forehead, cheeks, and jawline in the frame</li>
               </ul>
+            </div>
+
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <h3 className="font-semibold text-blue-800 mb-2">🔬 AI Technology:</h3>
+              <p className="text-sm text-blue-700">
+                Our advanced computer vision analyzes thousands of skin pixels to determine your exact skin tone, undertones, and create a personalized color palette just for you.
+              </p>
             </div>
           </CardContent>
         </Card>
