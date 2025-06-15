@@ -27,6 +27,7 @@ const OutfitStyleSelector = ({ skinTone, colorPalette, onStyleSelected, onBack }
 
   const handleContinue = () => {
     if (selectedStyle) {
+      console.log('Selected style:', selectedStyle);
       onStyleSelected(selectedStyle);
     }
   };

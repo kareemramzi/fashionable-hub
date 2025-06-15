@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -170,6 +169,7 @@ const Index = () => {
   };
 
   const handleStyleSelected = (occasion: string) => {
+    console.log('Style selected in Index:', occasion);
     setSelectedStyle(occasion);
     changeView("outfitRecommendations");
   };
@@ -271,6 +271,10 @@ const Index = () => {
   }
 
   const renderCurrentView = () => {
+    console.log('Current view:', currentView);
+    console.log('Selected style:', selectedStyle);
+    console.log('Current skin data:', currentSkinData);
+    
     switch (currentView) {
       case "skinAnalysis":
         return (
