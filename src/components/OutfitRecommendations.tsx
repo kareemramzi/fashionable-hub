@@ -102,7 +102,7 @@ const OutfitRecommendations = ({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-24">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-32">
         <TopNavBar 
           onBack={onBack}
           onFavorites={() => {}}
@@ -121,7 +121,7 @@ const OutfitRecommendations = ({
   const currentOutfits = recommendationSource === "wardrobe" ? wardrobeOutfits : shopOutfits;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-32">
       <TopNavBar 
         onBack={onBack}
         onFavorites={() => {}}
@@ -168,7 +168,7 @@ const OutfitRecommendations = ({
           </CardHeader>
         </Card>
 
-        <div className="space-y-4 pb-6">
+        <div className="space-y-4">
           <h2 className="text-xl font-bold text-gray-800">Complete Outfit Combinations</h2>
           
           {currentOutfits.length > 0 ? (
