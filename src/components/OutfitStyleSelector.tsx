@@ -30,7 +30,11 @@ const OutfitStyleSelector = ({ skinTone, colorPalette, onStyleSelected, onBack }
   const handleStyleSelection = (occasionId: string) => {
     console.log('OutfitStyleSelector - Style selected:', occasionId);
     setSelectedStyle(occasionId);
-    setStep("source");
+    // Add a small delay to ensure state is updated before step change
+    setTimeout(() => {
+      console.log('OutfitStyleSelector - Moving to source step');
+      setStep("source");
+    }, 100);
   };
 
   const handleSourceSelection = (source: "wardrobe" | "shop") => {
@@ -46,6 +50,7 @@ const OutfitStyleSelector = ({ skinTone, colorPalette, onStyleSelected, onBack }
   };
 
   const handleBackToOccasion = () => {
+    console.log('OutfitStyleSelector - Going back to occasion step');
     setStep("occasion");
     setSelectedSource(null);
   };
@@ -62,6 +67,7 @@ const OutfitStyleSelector = ({ skinTone, colorPalette, onStyleSelected, onBack }
           </h1>
         </div>
 
+        {/* Color Palette Card */}
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -86,6 +92,7 @@ const OutfitStyleSelector = ({ skinTone, colorPalette, onStyleSelected, onBack }
           </CardContent>
         </Card>
 
+        {/* Occasion Selection Step */}
         {step === "occasion" && (
           <Card className="shadow-lg">
             <CardHeader>
@@ -99,7 +106,7 @@ const OutfitStyleSelector = ({ skinTone, colorPalette, onStyleSelected, onBack }
                     className={`p-3 rounded-lg border cursor-pointer transition-all ${
                       selectedStyle === occasion.id
                         ? 'border-purple-600 bg-purple-50'
-                        : 'border-gray-200 hover:border-purple-300'
+                        : 'border-gray-200 hover:border-purple-300 hover:bg-purple-25'
                     }`}
                     onClick={() => handleStyleSelection(occasion.id)}
                   >
@@ -119,6 +126,7 @@ const OutfitStyleSelector = ({ skinTone, colorPalette, onStyleSelected, onBack }
           </Card>
         )}
 
+        {/* Source Selection Step */}
         {step === "source" && selectedStyle && (
           <Card className="shadow-lg">
             <CardHeader>
@@ -136,7 +144,7 @@ const OutfitStyleSelector = ({ skinTone, colorPalette, onStyleSelected, onBack }
                   className={`p-4 rounded-lg border cursor-pointer transition-all ${
                     selectedSource === "wardrobe"
                       ? 'border-purple-600 bg-purple-50'
-                      : 'border-gray-200 hover:border-purple-300'
+                      : 'border-gray-200 hover:border-purple-300 hover:bg-purple-25'
                   }`}
                   onClick={() => handleSourceSelection("wardrobe")}
                 >
@@ -155,7 +163,7 @@ const OutfitStyleSelector = ({ skinTone, colorPalette, onStyleSelected, onBack }
                   className={`p-4 rounded-lg border cursor-pointer transition-all ${
                     selectedSource === "shop"
                       ? 'border-purple-600 bg-purple-50'
-                      : 'border-gray-200 hover:border-purple-300'
+                      : 'border-gray-200 hover:border-purple-300 hover:bg-purple-25'
                   }`}
                   onClick={() => handleSourceSelection("shop")}
                 >
@@ -174,7 +182,8 @@ const OutfitStyleSelector = ({ skinTone, colorPalette, onStyleSelected, onBack }
           </Card>
         )}
 
-        {selectedSource && (
+        {/* Status Message */}
+        {step === "source" && selectedSource && (
           <div className="text-center p-4 bg-purple-50 rounded-lg">
             <p className="text-purple-700 font-medium">
               ✨ Getting your {selectedSource === "wardrobe" ? "wardrobe" : "shopping"} recommendations ready...
@@ -182,14 +191,17 @@ const OutfitStyleSelector = ({ skinTone, colorPalette, onStyleSelected, onBack }
           </div>
         )}
 
-        <Button
-          onClick={handleContinue}
-          disabled={!selectedStyle || !selectedSource}
-          className="w-full bg-purple-600 hover:bg-purple-700 py-6 text-lg"
-          size="lg"
-        >
-          Get Recommendations
-        </Button>
+        {/* Continue Button */}
+        {step === "source" && (
+          <Button
+            onClick={handleContinue}
+            disabled={!selectedStyle || !selectedSource}
+            className="w-full bg-purple-600 hover:bg-purple-700 py-6 text-lg"
+            size="lg"
+          >
+            Get Recommendations
+          </Button>
+        )}
       </div>
     </div>
   );
