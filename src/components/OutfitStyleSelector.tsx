@@ -27,7 +27,7 @@ const OutfitStyleSelector = ({ skinTone, colorPalette, onStyleSelected, onBack }
 
   const handleContinue = () => {
     if (selectedStyle) {
-      console.log('OutfitStyleSelector - Selected style:', selectedStyle);
+      console.log('OutfitStyleSelector - Calling onStyleSelected with:', selectedStyle);
       onStyleSelected(selectedStyle);
     }
   };
@@ -35,6 +35,12 @@ const OutfitStyleSelector = ({ skinTone, colorPalette, onStyleSelected, onBack }
   const handleStyleSelection = (occasionId: string) => {
     console.log('OutfitStyleSelector - Style selected:', occasionId);
     setSelectedStyle(occasionId);
+    
+    // Auto-proceed after selection (remove the need for Continue button)
+    setTimeout(() => {
+      console.log('OutfitStyleSelector - Auto-proceeding with:', occasionId);
+      onStyleSelected(occasionId);
+    }, 500); // Small delay for visual feedback
   };
 
   return (
@@ -101,6 +107,14 @@ const OutfitStyleSelector = ({ skinTone, colorPalette, onStyleSelected, onBack }
             </div>
           </CardContent>
         </Card>
+
+        {selectedStyle && (
+          <div className="text-center p-4 bg-purple-50 rounded-lg">
+            <p className="text-purple-700 font-medium">
+              ✨ Getting your outfit recommendations ready...
+            </p>
+          </div>
+        )}
 
         <Button
           onClick={handleContinue}

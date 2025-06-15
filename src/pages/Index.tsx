@@ -170,10 +170,17 @@ const Index = () => {
   };
 
   const handleStyleSelected = (occasion: string) => {
-    console.log('Index - Style selected:', occasion);
+    console.log('Index - handleStyleSelected called with:', occasion);
+    console.log('Index - Current selectedStyle before update:', selectedStyle);
     setSelectedStyle(occasion);
-    console.log('Index - Navigating to outfitRecommendations');
-    changeView("outfitRecommendations");
+    console.log('Index - Updated selectedStyle to:', occasion);
+    console.log('Index - About to navigate to outfitRecommendations');
+    
+    // Force a small delay to ensure state is updated
+    setTimeout(() => {
+      console.log('Index - Actually navigating to outfitRecommendations with style:', occasion);
+      changeView("outfitRecommendations");
+    }, 100);
   };
 
   const handleSignUp = () => {
@@ -273,9 +280,9 @@ const Index = () => {
   }
 
   const renderCurrentView = () => {
-    console.log('Index - Current view:', currentView);
-    console.log('Index - Selected style:', selectedStyle);
-    console.log('Index - Current skin data:', currentSkinData);
+    console.log('Index - renderCurrentView - Current view:', currentView);
+    console.log('Index - renderCurrentView - Selected style:', selectedStyle);
+    console.log('Index - renderCurrentView - Current skin data:', currentSkinData);
     
     switch (currentView) {
       case "skinAnalysis":
@@ -289,6 +296,7 @@ const Index = () => {
           />
         );
       case "styleSelector":
+        console.log('Index - Rendering styleSelector with skin data:', currentSkinData);
         return (
           <OutfitStyleSelector
             skinTone={currentSkinData?.skinTone || ""}
@@ -299,11 +307,14 @@ const Index = () => {
         );
       case "outfitRecommendations":
         console.log('Index - Rendering outfitRecommendations with style:', selectedStyle);
+        console.log('Index - Current skin data for recommendations:', currentSkinData);
         if (!selectedStyle || !currentSkinData) {
-          console.log('Index - Missing data, redirecting to styleSelector');
+          console.log('Index - Missing data - selectedStyle:', selectedStyle, 'currentSkinData:', currentSkinData);
+          console.log('Index - Redirecting back to styleSelector');
           changeView("styleSelector");
           return null;
         }
+        console.log('Index - All data available, rendering OutfitRecommendations');
         return (
           <OutfitRecommendations
             occasion={selectedStyle}
