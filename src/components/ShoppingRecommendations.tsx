@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -304,9 +305,9 @@ const ShoppingRecommendations = ({ skinTone, colorPalette, onBack, onFavorites, 
                         <p className="text-sm text-gray-600">{product.brand}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-purple-600">${product.price}</p>
+                        <p className="font-bold text-purple-600">{product.price} EGP</p>
                         {product.original_price && product.original_price > product.price && (
-                          <p className="text-sm text-gray-500 line-through">${product.original_price}</p>
+                          <p className="text-sm text-gray-500 line-through">{product.original_price} EGP</p>
                         )}
                       </div>
                     </div>

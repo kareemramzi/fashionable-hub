@@ -33,42 +33,42 @@ const OutfitRecommendations = ({
   const getOutfitRecommendations = () => {
     const baseItems = {
       formal: [
-        { id: 1, type: "blazer", name: "Tailored Blazer", price: 159.99, image: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=300&h=400&fit=crop" },
-        { id: 2, type: "shirt", name: "Silk Blouse", price: 89.99, image: "https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=300&h=400&fit=crop" },
-        { id: 3, type: "pants", name: "Dress Trousers", price: 99.99, image: "https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=300&h=400&fit=crop" },
-        { id: 4, type: "shoes", name: "Oxford Heels", price: 129.99, image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300&h=400&fit=crop" }
+        { id: 1, type: "blazer", name: "Tailored Blazer", price: 2400, image: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=300&h=400&fit=crop" },
+        { id: 2, type: "shirt", name: "Silk Blouse", price: 1350, image: "https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=300&h=400&fit=crop" },
+        { id: 3, type: "pants", name: "Dress Trousers", price: 1500, image: "https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=300&h=400&fit=crop" },
+        { id: 4, type: "shoes", name: "Oxford Heels", price: 1950, image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300&h=400&fit=crop" }
       ],
       casual: [
-        { id: 5, type: "top", name: "Cotton T-Shirt", price: 29.99, image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300&h=400&fit=crop" },
-        { id: 6, type: "jeans", name: "Denim Jeans", price: 79.99, image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=300&h=400&fit=crop" },
-        { id: 7, type: "cardigan", name: "Knit Cardigan", price: 69.99, image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=300&h=400&fit=crop" },
-        { id: 8, type: "sneakers", name: "White Sneakers", price: 89.99, image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=300&h=400&fit=crop" }
+        { id: 5, type: "top", name: "Cotton T-Shirt", price: 450, image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300&h=400&fit=crop" },
+        { id: 6, type: "jeans", name: "Denim Jeans", price: 1200, image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=300&h=400&fit=crop" },
+        { id: 7, type: "cardigan", name: "Knit Cardigan", price: 1050, image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=300&h=400&fit=crop" },
+        { id: 8, type: "sneakers", name: "White Sneakers", price: 1350, image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=300&h=400&fit=crop" }
       ],
       party: [
-        { id: 9, type: "dress", name: "Cocktail Dress", price: 149.99, image: "https://images.unsplash.com/photo-1566479179817-c3e6fba5dde4?w=300&h=400&fit=crop" },
-        { id: 10, type: "heels", name: "Strappy Heels", price: 119.99, image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300&h=400&fit=crop" },
-        { id: 11, type: "clutch", name: "Evening Clutch", price: 59.99, image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=300&h=400&fit=crop" },
-        { id: 12, type: "jewelry", name: "Statement Earrings", price: 39.99, image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=300&h=400&fit=crop" }
+        { id: 9, type: "dress", name: "Cocktail Dress", price: 2250, image: "https://images.unsplash.com/photo-1566479179817-c3e6fba5dde4?w=300&h=400&fit=crop" },
+        { id: 10, type: "heels", name: "Strappy Heels", price: 1800, image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300&h=400&fit=crop" },
+        { id: 11, type: "clutch", name: "Evening Clutch", price: 900, image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=300&h=400&fit=crop" },
+        { id: 12, type: "jewelry", name: "Statement Earrings", price: 600, image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=300&h=400&fit=crop" }
       ],
       business: [
-        { id: 13, type: "blazer", name: "Business Blazer", price: 139.99, image: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=300&h=400&fit=crop" },
-        { id: 14, type: "pants", name: "Straight Leg Trousers", price: 89.99, image: "https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=300&h=400&fit=crop" }
+        { id: 13, type: "blazer", name: "Business Blazer", price: 2100, image: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=300&h=400&fit=crop" },
+        { id: 14, type: "pants", name: "Straight Leg Trousers", price: 1350, image: "https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=300&h=400&fit=crop" }
       ],
       weekend: [
-        { id: 15, type: "sweater", name: "Cozy Sweater", price: 59.99, image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=300&h=400&fit=crop" },
-        { id: 16, type: "jeans", name: "Relaxed Jeans", price: 69.99, image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=300&h=400&fit=crop" }
+        { id: 15, type: "sweater", name: "Cozy Sweater", price: 900, image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=300&h=400&fit=crop" },
+        { id: 16, type: "jeans", name: "Relaxed Jeans", price: 1050, image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=300&h=400&fit=crop" }
       ],
       workout: [
-        { id: 17, type: "sports bra", name: "Athletic Sports Bra", price: 39.99, image: "https://images.unsplash.com/photo-1506629905607-24fa5e4e8d7d?w=300&h=400&fit=crop" },
-        { id: 18, type: "leggings", name: "High-Waist Leggings", price: 49.99, image: "https://images.unsplash.com/photo-1506629905607-24fa5e4e8d7d?w=300&h=400&fit=crop" }
+        { id: 17, type: "sports bra", name: "Athletic Sports Bra", price: 600, image: "https://images.unsplash.com/photo-1506629905607-24fa5e4e8d7d?w=300&h=400&fit=crop" },
+        { id: 18, type: "leggings", name: "High-Waist Leggings", price: 750, image: "https://images.unsplash.com/photo-1506629905607-24fa5e4e8d7d?w=300&h=400&fit=crop" }
       ],
       travel: [
-        { id: 19, type: "jacket", name: "Travel Jacket", price: 89.99, image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=300&h=400&fit=crop" },
-        { id: 20, type: "pants", name: "Comfortable Pants", price: 59.99, image: "https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=300&h=400&fit=crop" }
+        { id: 19, type: "jacket", name: "Travel Jacket", price: 1350, image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=300&h=400&fit=crop" },
+        { id: 20, type: "pants", name: "Comfortable Pants", price: 900, image: "https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=300&h=400&fit=crop" }
       ],
       date: [
-        { id: 21, type: "dress", name: "Date Night Dress", price: 129.99, image: "https://images.unsplash.com/photo-1566479179817-c3e6fba5dde4?w=300&h=400&fit=crop" },
-        { id: 22, type: "heels", name: "Elegant Heels", price: 99.99, image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300&h=400&fit=crop" }
+        { id: 21, type: "dress", name: "Date Night Dress", price: 1950, image: "https://images.unsplash.com/photo-1566479179817-c3e6fba5dde4?w=300&h=400&fit=crop" },
+        { id: 22, type: "heels", name: "Elegant Heels", price: 1500, image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300&h=400&fit=crop" }
       ]
     };
 
@@ -220,7 +220,7 @@ const OutfitRecommendations = ({
                       <p className="text-sm text-gray-600">{item.brand}</p>
                       <p className="text-xs text-purple-600 capitalize">{item.type}</p>
                     </div>
-                    <p className="font-bold text-purple-600">${item.price}</p>
+                    <p className="font-bold text-purple-600">{item.price} EGP</p>
                   </div>
                   
                   <div className="flex items-center gap-2 mb-3">
