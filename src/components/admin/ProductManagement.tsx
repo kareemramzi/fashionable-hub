@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchProducts, Product } from "@/lib/products";
+import ImageUpload from "./ImageUpload";
 
 const ProductManagement = () => {
   const [showAddForm, setShowAddForm] = useState(false);
@@ -69,7 +69,6 @@ const ProductManagement = () => {
       };
 
       if (editingProduct) {
-        // Update existing product
         const { error } = await supabase
           .from('products')
           .update(productData)
@@ -82,7 +81,6 @@ const ProductManagement = () => {
           description: `${formData.name} has been updated`,
         });
       } else {
-        // Add new product
         const { error } = await supabase
           .from('products')
           .insert(productData);
@@ -148,6 +146,10 @@ const ProductManagement = () => {
         description: "Could not delete the product",
       });
     }
+  };
+
+  const handleImageUploaded = (url: string) => {
+    setFormData(prev => ({ ...prev, image_url: url }));
   };
 
   if (isLoading) {
@@ -254,16 +256,12 @@ const ProductManagement = () => {
                   />
                 </div>
               </div>
-              <div>
-                <Label htmlFor="image_url">Image URL *</Label>
-                <Input
-                  id="image_url"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
-                  placeholder="https://example.com/image.jpg"
-                  required
-                />
-              </div>
+              
+              <ImageUpload
+                onImageUploaded={handleImageUploaded}
+                currentImageUrl={formData.image_url}
+              />
+              
               <div>
                 <Label htmlFor="description">Description</Label>
                 <Textarea
