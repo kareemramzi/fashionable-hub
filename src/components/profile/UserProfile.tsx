@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +20,6 @@ const UserProfile = ({ onBack, onSignOut, onUpdateAnalysis }: UserProfileProps) 
     full_name: "",
     email: "",
     phone: "",
-    preferences: "",
   });
   const [skinData, setSkinData] = useState<{
     skin_tone: string;
@@ -43,7 +43,6 @@ const UserProfile = ({ onBack, onSignOut, onUpdateAnalysis }: UserProfileProps) 
         full_name: user.user_metadata?.full_name || "",
         email: user.email || "",
         phone: user.user_metadata?.phone || "",
-        preferences: user.user_metadata?.preferences || "",
       });
 
       // Fetch skin analysis data
@@ -74,7 +73,6 @@ const UserProfile = ({ onBack, onSignOut, onUpdateAnalysis }: UserProfileProps) 
         data: {
           full_name: profile.full_name,
           phone: profile.phone,
-          preferences: profile.preferences,
         }
       });
 
@@ -126,7 +124,7 @@ const UserProfile = ({ onBack, onSignOut, onUpdateAnalysis }: UserProfileProps) 
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4 pb-24">
       <div className="max-w-md mx-auto space-y-6">
         <div className="flex items-center gap-4 mb-6">
           <Button variant="ghost" size="icon" onClick={onBack}>
@@ -216,17 +214,6 @@ const UserProfile = ({ onBack, onSignOut, onUpdateAnalysis }: UserProfileProps) 
                 onChange={(e) => setProfile(prev => ({ ...prev, phone: e.target.value }))}
                 disabled={!isEditing}
                 placeholder="Enter your phone number"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="preferences">Style Preferences</Label>
-              <Input
-                id="preferences"
-                value={profile.preferences}
-                onChange={(e) => setProfile(prev => ({ ...prev, preferences: e.target.value }))}
-                disabled={!isEditing}
-                placeholder="Describe your style preferences"
               />
             </div>
 
