@@ -1,13 +1,19 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, ShoppingCart, Star, Filter, Palette, Sparkles } from "lucide-react";
+import { Heart, ShoppingCart, Star, Palette, Sparkles, Shirt } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import TopNavBar from "./navigation/TopNavBar";
 import { fetchProducts, addProductToWardrobe, Product } from "@/lib/products";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { 
+  calculateAdvancedProductMatch, 
+  generateOutfitCombinations, 
+  OutfitCombination 
+} from "@/lib/colorMatching";
 
 interface OutfitRecommendationsProps {
   occasion: string;
@@ -30,7 +36,8 @@ const OutfitRecommendations = ({
   onAddToFavorites, 
   onShopNow 
 }: OutfitRecommendationsProps) => {
-  const [wardrobeOutfits, setWardrobeOutfits] = useState<any[]>([]);
+  const [wardrobeOutfits, setWardrobeOutfits] = useState<OutfitCombination[]>([]);
+  const [shopOutfits, setShopOutfits] = useState<OutfitCombination[]>([]);
 
   const { toast } = useToast();
 
@@ -66,94 +73,20 @@ const OutfitRecommendations = ({
   });
 
   useEffect(() => {
-    if (wardrobeItems.length > 0) {
+    if (recommendationSource === "wardrobe" && wardrobeItems.length > 0) {
       // Generate outfit combinations from wardrobe items
-      const combinations = generateWardrobeOutfits(wardrobeItems);
+      const wardrobeProducts = wardrobeItems.map(item => item.products).filter(Boolean);
+      const combinations = generateOutfitCombinations(wardrobeProducts, colorPalette, occasion, 4);
       setWardrobeOutfits(combinations);
+    } else if (recommendationSource === "shop" && products.length > 0) {
+      // Generate outfit combinations from shop products
+      const combinations = generateOutfitCombinations(products, colorPalette, occasion, 6);
+      setShopOutfits(combinations);
     }
-  }, [wardrobeItems]);
-
-  const generateWardrobeOutfits = (items: any[]) => {
-    // Group items by category
-    const tops = items.filter(item => item.products?.category === 'tops');
-    const bottoms = items.filter(item => item.products?.category === 'bottoms');
-    const dresses = items.filter(item => item.products?.category === 'dresses');
-    const outerwear = items.filter(item => item.products?.category === 'outerwear');
-
-    const outfits = [];
-
-    // Create combinations based on available items
-    if (tops.length > 0 && bottoms.length > 0) {
-      tops.forEach((top, topIndex) => {
-        bottoms.forEach((bottom, bottomIndex) => {
-          if (topIndex < 3 && bottomIndex < 3) { // Limit combinations
-            const outfit = [top, bottom];
-            if (outerwear.length > 0 && Math.random() > 0.5) {
-              outfit.push(outerwear[0]);
-            }
-            outfits.push({
-              id: `wardrobe-${topIndex}-${bottomIndex}`,
-              items: outfit,
-              match: calculateWardrobeMatch(outfit)
-            });
-          }
-        });
-      });
-    }
-
-    if (dresses.length > 0) {
-      dresses.forEach((dress, index) => {
-        if (index < 2) {
-          outfits.push({
-            id: `wardrobe-dress-${index}`,
-            items: [dress],
-            match: calculateWardrobeMatch([dress])
-          });
-        }
-      });
-    }
-
-    return outfits.slice(0, 4); // Limit to 4 outfits
-  };
-
-  const calculateWardrobeMatch = (items: any[]): number => {
-    let match = 70; // Base score for wardrobe items
-    
-    // Check color matching with user's palette
-    items.forEach(item => {
-      const itemColor = item.products?.color?.toLowerCase() || '';
-      for (const paletteColor of colorPalette) {
-        if (itemColor.includes(paletteColor.toLowerCase()) || 
-            paletteColor.toLowerCase().includes(itemColor)) {
-          match += 10;
-          break;
-        }
-      }
-    });
-
-    return Math.min(match, 95);
-  };
+  }, [wardrobeItems, products, colorPalette, occasion, recommendationSource]);
 
   const calculateMatch = (product: Product): number => {
-    // Simple color matching algorithm based on color similarity
-    const productColor = product.color.toLowerCase();
-    let match = 70; // Base match score
-
-    // Check if product color matches any color in the palette
-    for (const paletteColor of colorPalette) {
-      if (productColor.includes(paletteColor.toLowerCase()) || 
-          paletteColor.toLowerCase().includes(productColor)) {
-        match += 25;
-        break;
-      }
-    }
-
-    // Add bonus for highly rated products
-    if (product.rating && product.rating > 4.5) {
-      match += 5;
-    }
-
-    return Math.min(match, 98); // Cap at 98%
+    return calculateAdvancedProductMatch(product, colorPalette, occasion);
   };
 
   if (isLoading) {
@@ -173,6 +106,8 @@ const OutfitRecommendations = ({
       </div>
     );
   }
+
+  const currentOutfits = recommendationSource === "wardrobe" ? wardrobeOutfits : shopOutfits;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-20">
@@ -213,7 +148,7 @@ const OutfitRecommendations = ({
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-purple-600" />
+              <Shirt className="w-5 h-5 text-purple-600" />
               {recommendationSource === "wardrobe" ? "From Your Wardrobe" : "Shop Recommendations"}
             </CardTitle>
             <p className="text-sm text-gray-600">
@@ -223,50 +158,103 @@ const OutfitRecommendations = ({
         </Card>
 
         <div className="space-y-4">
-          {recommendationSource === "wardrobe" ? (
-            wardrobeOutfits.length > 0 ? (
-              <div className="grid gap-4">
-                {wardrobeOutfits.map((outfit) => (
-                  <Card key={outfit.id} className="shadow-lg overflow-hidden">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-semibold">Wardrobe Combination</h3>
-                        <Badge className="bg-green-100 text-green-800">
-                          {outfit.match}% match
-                        </Badge>
+          <h2 className="text-xl font-bold text-gray-800">Complete Outfit Combinations</h2>
+          
+          {currentOutfits.length > 0 ? (
+            <div className="grid gap-4">
+              {currentOutfits.map((combination) => (
+                <Card key={combination.id} className="shadow-lg overflow-hidden">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h3 className="font-semibold text-gray-800">{combination.styleDescription}</h3>
+                        <p className="text-sm text-gray-600">{combination.colorHarmony} Color Harmony</p>
                       </div>
-                      
-                      <div className="grid grid-cols-2 gap-2 mb-4">
-                        {outfit.items.map((item: any, index: number) => (
-                          <div key={index} className="text-center">
+                      <Badge className="bg-green-100 text-green-800">
+                        {combination.matchScore}% match
+                      </Badge>
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-2 mb-4">
+                      {combination.items.map((item: any, index: number) => (
+                        <div key={index} className="text-center">
+                          <div className="relative">
                             <img
-                              src={item.products?.image_url || "/placeholder.svg"}
-                              alt={item.products?.name}
-                              className="w-full h-24 object-cover rounded mb-2"
+                              src={item.image_url || "/placeholder.svg"}
+                              alt={item.name}
+                              className="w-full h-20 object-contain rounded border"
                             />
-                            <p className="text-xs font-medium">{item.products?.name}</p>
-                            <p className="text-xs text-gray-500">{item.products?.brand}</p>
+                            <div 
+                              className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white"
+                              style={{ backgroundColor: item.color }}
+                            />
                           </div>
-                        ))}
+                          <p className="text-xs font-medium mt-1 truncate">{item.name}</p>
+                          <p className="text-xs text-gray-500">{item.brand}</p>
+                          {recommendationSource === "shop" && (
+                            <p className="text-xs text-purple-600 font-semibold">{item.price} EGP</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="flex items-center justify-between mb-3">
+                      {recommendationSource === "shop" && (
+                        <div className="text-sm text-gray-600">
+                          Total: <span className="font-bold text-purple-600">
+                            {combination.items.reduce((sum, item) => sum + item.price, 0)} EGP
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1">
+                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        <span className="text-sm">
+                          {(combination.items.reduce((sum, item) => sum + (item.rating || 4.0), 0) / combination.items.length).toFixed(1)}
+                        </span>
                       </div>
-                      
-                      <p className="text-sm text-gray-600 mb-3">
-                        Perfect for: {occasion}
+                    </div>
+                    
+                    {recommendationSource === "wardrobe" ? (
+                      <p className="text-xs text-green-600 font-medium text-center py-2">
+                        ✨ Complete outfit from your wardrobe!
                       </p>
-                      
-                      <p className="text-xs text-green-600 font-medium">
-                        ✨ Already in your wardrobe!
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card className="shadow-lg">
-                <CardContent className="p-6 text-center">
-                  <p className="text-gray-600 mb-4">
-                    No items in your wardrobe yet for outfit combinations
-                  </p>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => {
+                            combination.items.forEach(item => onAddToCart(item));
+                          }}
+                          variant="outline"
+                          className="flex-1"
+                        >
+                          <ShoppingCart className="w-4 h-4 mr-2" />
+                          Add All to Cart
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            combination.items.forEach(item => onAddToFavorites(item));
+                          }}
+                          className="flex-1 bg-purple-600 hover:bg-purple-700"
+                        >
+                          <Heart className="w-4 h-4 mr-2" />
+                          Save Outfit
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="shadow-lg">
+              <CardContent className="p-6 text-center">
+                <p className="text-gray-600 mb-4">
+                  {recommendationSource === "wardrobe" 
+                    ? "No items in your wardrobe yet for outfit combinations"
+                    : "No outfit combinations available for this occasion"
+                  }
+                </p>
+                {recommendationSource === "wardrobe" && (
                   <Button
                     variant="outline"
                     onClick={onShopNow}
@@ -274,91 +262,9 @@ const OutfitRecommendations = ({
                   >
                     Browse Shop Instead
                   </Button>
-                </CardContent>
-              </Card>
-            )
-          ) : (
-            <div className="grid gap-4">
-              {products.map((product) => {
-                const match = calculateMatch(product);
-                return (
-                  <Card key={product.id} className="shadow-lg overflow-hidden">
-                    <div className="relative bg-gray-50">
-                      <img
-                        src={product.image_url}
-                        alt={product.name}
-                        className="w-full h-48 object-contain"
-                      />
-                      <div className="absolute top-2 right-2 flex gap-2">
-                        <Badge className="bg-green-100 text-green-800">
-                          {match}% match
-                        </Badge>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="rounded-full text-gray-500 bg-white/80 hover:bg-white"
-                          onClick={() => onAddToFavorites(product)}
-                        >
-                          <Heart className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      {product.original_price && product.original_price > product.price && (
-                        <div className="absolute top-2 left-2">
-                          <Badge variant="destructive">
-                            Sale
-                          </Badge>
-                        </div>
-                      )}
-                    </div>
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h3 className="font-semibold text-gray-800">{product.name}</h3>
-                          <p className="text-sm text-gray-600">{product.brand}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-purple-600">{product.price} EGP</p>
-                          {product.original_price && product.original_price > product.price && (
-                            <p className="text-sm text-gray-500 line-through">{product.original_price} EGP</p>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span className="text-sm text-gray-600">{product.rating || 4.0}</span>
-                        </div>
-                        <div
-                          className="w-4 h-4 rounded-full border"
-                          style={{ backgroundColor: product.color }}
-                          title="Recommended color"
-                        />
-                        <span className="text-xs text-gray-500">Stock: {product.stock_quantity}</span>
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => onAddToCart(product)}
-                          variant="outline"
-                          className="flex-1"
-                        >
-                          <ShoppingCart className="w-4 h-4 mr-2" />
-                          Add to Cart
-                        </Button>
-                        <Button
-                          onClick={() => onAddToFavorites(product)}
-                          className="flex-1 bg-purple-600 hover:bg-purple-700"
-                        >
-                          <Heart className="w-4 h-4 mr-2" />
-                          Add to Favorites
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+                )}
+              </CardContent>
+            </Card>
           )}
         </div>
       </div>
