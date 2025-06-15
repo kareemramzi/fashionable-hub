@@ -1,0 +1,218 @@
+
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, User, Edit, Save, LogOut } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+
+interface UserProfileProps {
+  onBack: () => void;
+  onSignOut: () => void;
+}
+
+const UserProfile = ({ onBack, onSignOut }: UserProfileProps) => {
+  const [profile, setProfile] = useState({
+    full_name: "",
+    email: "",
+    phone: "",
+    preferences: "",
+  });
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      setProfile({
+        full_name: user.user_metadata?.full_name || "",
+        email: user.email || "",
+        phone: user.user_metadata?.phone || "",
+        preferences: user.user_metadata?.preferences || "",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error loading profile",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const saveProfile = async () => {
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          full_name: profile.full_name,
+          phone: profile.phone,
+          preferences: profile.preferences,
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been successfully updated",
+      });
+      
+      setIsEditing(false);
+    } catch (error: any) {
+      toast({
+        title: "Error updating profile",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Signed out",
+        description: "You have been successfully signed out",
+      });
+      onSignOut();
+    } catch (error: any) {
+      toast({
+        title: "Error signing out",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p>Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4">
+      <div className="max-w-md mx-auto space-y-6">
+        <div className="flex items-center gap-4 mb-6">
+          <Button variant="ghost" size="icon" onClick={onBack}>
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-2xl font-bold text-gray-800">Profile</h1>
+        </div>
+
+        <Card className="shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <User className="w-5 h-5 text-purple-600" />
+              My Profile
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => isEditing ? saveProfile() : setIsEditing(true)}
+              disabled={isSaving}
+            >
+              {isEditing ? <Save className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Full Name</Label>
+              <Input
+                id="fullName"
+                value={profile.full_name}
+                onChange={(e) => setProfile(prev => ({ ...prev, full_name: e.target.value }))}
+                disabled={!isEditing}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                value={profile.email}
+                disabled
+                className="bg-gray-100"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                value={profile.phone}
+                onChange={(e) => setProfile(prev => ({ ...prev, phone: e.target.value }))}
+                disabled={!isEditing}
+                placeholder="Enter your phone number"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="preferences">Style Preferences</Label>
+              <Input
+                id="preferences"
+                value={profile.preferences}
+                onChange={(e) => setProfile(prev => ({ ...prev, preferences: e.target.value }))}
+                disabled={!isEditing}
+                placeholder="Describe your style preferences"
+              />
+            </div>
+
+            {isEditing && (
+              <div className="flex gap-2 pt-4">
+                <Button
+                  onClick={saveProfile}
+                  disabled={isSaving}
+                  className="flex-1 bg-purple-600 hover:bg-purple-700"
+                >
+                  {isSaving ? "Saving..." : "Save Changes"}
+                </Button>
+                <Button
+                  onClick={() => setIsEditing(false)}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg">
+          <CardContent className="pt-6">
+            <Button
+              onClick={handleSignOut}
+              variant="outline"
+              className="w-full text-red-600 border-red-600 hover:bg-red-50"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default UserProfile;
