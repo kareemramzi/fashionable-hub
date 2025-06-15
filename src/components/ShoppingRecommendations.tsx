@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -271,11 +270,11 @@ const ShoppingRecommendations = ({ skinTone, colorPalette, onBack, onFavorites, 
               const match = calculateMatch(product);
               return (
                 <Card key={product.id} className="shadow-lg overflow-hidden">
-                  <div className="relative">
+                  <div className="relative bg-gray-50">
                     <img
                       src={product.image_url}
                       alt={product.name}
-                      className="w-full h-48 object-cover"
+                      className="w-full h-48 object-contain"
                     />
                     <div className="absolute top-2 right-2 flex gap-2">
                       <Badge className="bg-green-100 text-green-800">
