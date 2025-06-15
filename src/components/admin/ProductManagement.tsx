@@ -38,7 +38,7 @@ const ProductManagement = () => {
     color: "",
     image_url: "",
     stock_quantity: "",
-    gender: "unisex"
+    gender: "unisex" as 'male' | 'female' | 'unisex'
   });
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -79,7 +79,7 @@ const ProductManagement = () => {
         color: formData.color,
         image_url: formData.image_url,
         stock_quantity: formData.stock_quantity ? parseInt(formData.stock_quantity) : 0,
-        gender: formData.gender,
+        gender: formData.gender as 'male' | 'female' | 'unisex',
         updated_at: new Date().toISOString()
       };
 

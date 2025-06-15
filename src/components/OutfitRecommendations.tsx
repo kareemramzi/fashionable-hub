@@ -64,7 +64,7 @@ const OutfitRecommendations = ({
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products', userProfile?.gender],
-    queryFn: () => fetchProducts(undefined, userProfile?.gender),
+    queryFn: () => fetchProducts(undefined, userProfile?.gender as 'male' | 'female' | 'unisex'),
     enabled: !!userProfile
   });
 

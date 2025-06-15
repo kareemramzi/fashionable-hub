@@ -19,7 +19,7 @@ export interface Product {
   updated_at: string;
 }
 
-export const fetchProducts = async (category?: string, userGender?: 'male' | 'female'): Promise<Product[]> => {
+export const fetchProducts = async (category?: string, userGender?: 'male' | 'female' | 'unisex'): Promise<Product[]> => {
   try {
     let query = supabase
       .from('products')
@@ -32,7 +32,7 @@ export const fetchProducts = async (category?: string, userGender?: 'male' | 'fe
     }
 
     // Filter products based on user gender
-    if (userGender) {
+    if (userGender && userGender !== 'unisex') {
       query = query.in('gender', [userGender, 'unisex']);
     }
 
