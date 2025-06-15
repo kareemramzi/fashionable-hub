@@ -13,6 +13,7 @@ import {
   generateOutfitCombinations, 
   OutfitCombination 
 } from "@/lib/colorMatching";
+import { getUserProfile } from "@/lib/userProfile";
 
 interface OutfitRecommendationsProps {
   occasion: string;
@@ -52,12 +53,7 @@ const OutfitRecommendations = ({
     queryKey: ['user-profile', session?.user?.id],
     queryFn: async () => {
       if (!session?.user) return null;
-      const { data } = await supabase
-        .from('user_profiles')
-        .select('gender')
-        .eq('user_id', session.user.id)
-        .single();
-      return data;
+      return await getUserProfile(session.user.id);
     },
     enabled: !!session?.user
   });

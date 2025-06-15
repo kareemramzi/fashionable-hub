@@ -13,6 +13,7 @@ import {
   generateOutfitCombinations, 
   OutfitCombination 
 } from "@/lib/colorMatching";
+import { getUserProfile } from "@/lib/userProfile";
 
 interface ShoppingRecommendationsProps {
   skinTone: string;
@@ -39,17 +40,30 @@ const ShoppingRecommendations = ({
   const [outfitCombinations, setOutfitCombinations] = useState<OutfitCombination[]>([]);
   const { toast } = useToast();
 
-  const { data: products = [], isLoading } = useQuery({
-    queryKey: ['products', activeFilter === "outfits" ? "all" : activeFilter],
-    queryFn: () => fetchProducts(activeFilter === "outfits" ? undefined : activeFilter),
-  });
-
   const { data: session } = useQuery({
     queryKey: ['session'],
     queryFn: async () => {
       const { data } = await supabase.auth.getSession();
       return data.session;
     },
+  });
+
+  const { data: userProfile } = useQuery({
+    queryKey: ['user-profile', session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user) return null;
+      return await getUserProfile(session.user.id);
+    },
+    enabled: !!session?.user
+  });
+
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ['products', activeFilter === "outfits" ? "all" : activeFilter, userProfile?.gender],
+    queryFn: () => fetchProducts(
+      activeFilter === "outfits" ? undefined : activeFilter, 
+      userProfile?.gender as 'male' | 'female' | 'unisex'
+    ),
+    enabled: !!userProfile
   });
 
   // Generate outfit combinations when products are loaded
