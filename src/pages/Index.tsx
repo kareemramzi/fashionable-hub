@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import SkinAnalysis from "@/components/SkinAnalysis";
 import OutfitSelector from "@/components/OutfitSelector";
+import OutfitStyleSelector from "@/components/OutfitStyleSelector";
 import ShoppingRecommendations from "@/components/ShoppingRecommendations";
 import WardrobeManager from "@/components/WardrobeManager";
 import SignIn from "@/components/auth/SignIn";
@@ -12,12 +14,14 @@ import ShoppingCart from "@/components/cart/ShoppingCart";
 import UserProfile from "@/components/profile/UserProfile";
 import BottomNavBar from "@/components/navigation/BottomNavBar";
 import { Session, User } from "@supabase/supabase-js";
+import { getUserProfile, saveUserProfile } from "@/lib/userProfile";
 
 const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [currentView, setCurrentView] = useState<string>("home");
   const [skinData, setSkinData] = useState<{skinTone: string; palette: string[]} | null>(null);
+  const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [showSignUp, setShowSignUp] = useState(false);
   const [guestSkinData, setGuestSkinData] = useState<{skinTone: string; palette: string[]} | null>(null);
   const [userHasSavedAnalysis, setUserHasSavedAnalysis] = useState(false);
@@ -55,17 +59,13 @@ const Index = () => {
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      // For now, we'll simulate checking if user has saved analysis
-      // This will be replaced with actual database query later
-      console.log('Checking if user has saved skin analysis:', userId);
+      const profileData = await getUserProfile(userId);
       
-      // Simulate user has saved analysis (this will be from database later)
-      const localStorageKey = `skinAnalysis_${userId}`;
-      const savedData = localStorage.getItem(localStorageKey);
-      
-      if (savedData) {
-        const parsedData = JSON.parse(savedData);
-        setSkinData(parsedData);
+      if (profileData && profileData.skin_tone) {
+        setSkinData({
+          skinTone: profileData.skin_tone,
+          palette: profileData.color_palette || []
+        });
         setUserHasSavedAnalysis(true);
       }
     } catch (error) {
@@ -77,19 +77,25 @@ const Index = () => {
     const analysisData = { skinTone, palette };
     
     if (user) {
-      // User is authenticated - save to their profile
+      // User is authenticated - save to database
       try {
-        // For now, save to localStorage with user ID
-        const localStorageKey = `skinAnalysis_${user.id}`;
-        localStorage.setItem(localStorageKey, JSON.stringify(analysisData));
+        const success = await saveUserProfile(user.id, skinTone, palette);
         
-        setSkinData(analysisData);
-        setUserHasSavedAnalysis(true);
-        
-        toast({
-          title: "Analysis Saved! ✨",
-          description: "Your skin tone analysis has been saved to your profile.",
-        });
+        if (success) {
+          setSkinData(analysisData);
+          setUserHasSavedAnalysis(true);
+          
+          toast({
+            title: "Analysis Saved! ✨",
+            description: "Your skin tone analysis has been saved to your profile.",
+          });
+        } else {
+          setSkinData(analysisData);
+          toast({
+            title: "Analysis Complete! ✨",
+            description: "Your skin tone analysis is ready, but couldn't be saved.",
+          });
+        }
       } catch (error) {
         console.error('Error in handleAnalysisComplete:', error);
         setSkinData(analysisData);
@@ -109,11 +115,15 @@ const Index = () => {
       });
     }
     
+    setCurrentView("styleSelector");
+  };
+
+  const handleStyleSelected = (style: string) => {
+    setSelectedStyle(style);
     setCurrentView("recommendations");
   };
 
   const handleSignUp = () => {
-    // If guest has analysis data, we'll prompt them to save it after signup
     setShowSignUp(true);
   };
 
@@ -127,8 +137,7 @@ const Index = () => {
     
     // If guest had analysis data, save it for the new user
     if (guestSkinData && user) {
-      const localStorageKey = `skinAnalysis_${user.id}`;
-      localStorage.setItem(localStorageKey, JSON.stringify(guestSkinData));
+      saveUserProfile(user.id, guestSkinData.skinTone, guestSkinData.palette);
       setSkinData(guestSkinData);
       setUserHasSavedAnalysis(true);
       setGuestSkinData(null);
@@ -151,11 +160,20 @@ const Index = () => {
     setSkinData(null);
     setUserHasSavedAnalysis(false);
     setGuestSkinData(null);
+    setSelectedStyle(null);
     setCurrentView("home");
   };
 
   const handleUpdateAnalysis = () => {
     setCurrentView("skinAnalysis");
+  };
+
+  const handleProfileNavigation = () => {
+    if (!user) {
+      setShowSignUp(false); // Show sign-in form
+    } else {
+      setCurrentView("profile");
+    }
   };
 
   // For guests or users without saved analysis
@@ -188,7 +206,16 @@ const Index = () => {
             onBack={() => setCurrentView("home")}
             onFavorites={() => setCurrentView("favorites")}
             onCart={() => setCurrentView("cart")}
-            onProfile={() => setCurrentView("profile")}
+            onProfile={handleProfileNavigation}
+          />
+        );
+      case "styleSelector":
+        return (
+          <OutfitStyleSelector
+            skinTone={currentSkinData?.skinTone || ""}
+            colorPalette={currentSkinData?.palette || []}
+            onStyleSelected={handleStyleSelected}
+            onBack={() => setCurrentView("home")}
           />
         );
       case "recommendations":
@@ -199,7 +226,7 @@ const Index = () => {
             onBack={() => setCurrentView("home")}
             onFavorites={() => setCurrentView("favorites")}
             onCart={() => setCurrentView("cart")}
-            onProfile={() => setCurrentView("profile")}
+            onProfile={handleProfileNavigation}
           />
         );
       case "outfitSelector":
@@ -210,7 +237,7 @@ const Index = () => {
             onOutfitSelected={(outfitType: string) => setCurrentView("wardrobeManager")}
             onBack={() => setCurrentView("home")}
             onFavorites={() => setCurrentView("favorites")}
-            onProfile={() => setCurrentView("profile")}
+            onProfile={handleProfileNavigation}
           />
         );
       case "wardrobeManager":
@@ -224,7 +251,7 @@ const Index = () => {
             }}
             onProceedToShopping={() => setCurrentView("recommendations")}
             onBack={() => setCurrentView("home")}
-            onProfile={() => setCurrentView("profile")}
+            onProfile={handleProfileNavigation}
           />
         );
       case "favorites":
@@ -232,7 +259,7 @@ const Index = () => {
           <FavoritesList
             onBack={() => setCurrentView("home")}
             onCart={() => setCurrentView("cart")}
-            onProfile={() => setCurrentView("profile")}
+            onProfile={handleProfileNavigation}
           />
         );
       case "cart":
@@ -241,7 +268,7 @@ const Index = () => {
             onBack={() => setCurrentView("home")}
             onCheckout={handleCheckout}
             onFavorites={() => setCurrentView("favorites")}
-            onProfile={() => setCurrentView("profile")}
+            onProfile={handleProfileNavigation}
           />
         );
       case "profile":
@@ -249,6 +276,7 @@ const Index = () => {
           <UserProfile
             onBack={() => setCurrentView("home")}
             onSignOut={handleSignOut}
+            onUpdateAnalysis={handleUpdateAnalysis}
           />
         );
       default:
@@ -265,7 +293,7 @@ const Index = () => {
               <div className="grid gap-4">
                 {shouldShowAnalysisOption ? (
                   <div
-                    onClick={() => currentSkinData ? setCurrentView("recommendations") : setCurrentView("skinAnalysis")}
+                    onClick={() => currentSkinData ? setCurrentView("styleSelector") : setCurrentView("skinAnalysis")}
                     className="bg-white/80 backdrop-blur-lg p-6 rounded-xl shadow-xl border border-white/30 cursor-pointer hover:scale-105 transition-all duration-300"
                   >
                     <h2 className="text-xl font-bold text-purple-800 mb-2">
@@ -315,10 +343,10 @@ const Index = () => {
                     )}
                     <div className="flex gap-2">
                       <button
-                        onClick={() => setCurrentView("recommendations")}
+                        onClick={() => setCurrentView("styleSelector")}
                         className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors"
                       >
-                        View Recommendations
+                        Get Recommendations
                       </button>
                       <button
                         onClick={handleUpdateAnalysis}
@@ -375,7 +403,7 @@ const Index = () => {
         onHome={() => setCurrentView("home")}
         onFavorites={() => setCurrentView("favorites")}
         onCart={() => setCurrentView("cart")}
-        onProfile={() => setCurrentView("profile")}
+        onProfile={handleProfileNavigation}
         onShopping={() => setCurrentView("recommendations")}
       />
     </div>

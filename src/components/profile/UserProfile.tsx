@@ -4,22 +4,28 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, User, Edit, Save, LogOut } from "lucide-react";
+import { ArrowLeft, User, Edit, Save, LogOut, Palette } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getUserProfile } from "@/lib/userProfile";
 
 interface UserProfileProps {
   onBack: () => void;
   onSignOut: () => void;
+  onUpdateAnalysis?: () => void;
 }
 
-const UserProfile = ({ onBack, onSignOut }: UserProfileProps) => {
+const UserProfile = ({ onBack, onSignOut, onUpdateAnalysis }: UserProfileProps) => {
   const [profile, setProfile] = useState({
     full_name: "",
     email: "",
     phone: "",
     preferences: "",
   });
+  const [skinData, setSkinData] = useState<{
+    skin_tone: string;
+    color_palette: string[];
+  } | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -40,6 +46,15 @@ const UserProfile = ({ onBack, onSignOut }: UserProfileProps) => {
         phone: user.user_metadata?.phone || "",
         preferences: user.user_metadata?.preferences || "",
       });
+
+      // Fetch skin analysis data
+      const skinAnalysis = await getUserProfile(user.id);
+      if (skinAnalysis && skinAnalysis.skin_tone) {
+        setSkinData({
+          skin_tone: skinAnalysis.skin_tone,
+          color_palette: skinAnalysis.color_palette || []
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Error loading profile",
@@ -118,6 +133,43 @@ const UserProfile = ({ onBack, onSignOut }: UserProfileProps) => {
           </Button>
           <h1 className="text-2xl font-bold text-gray-800">Profile</h1>
         </div>
+
+        {skinData && (
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Palette className="w-5 h-5 text-purple-600" />
+                Your Skin Analysis
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-600 mb-2">
+                  Skin Tone: <span className="font-semibold">{skinData.skin_tone}</span>
+                </p>
+                <div className="flex gap-2 mb-4">
+                  {skinData.color_palette.map((color, index) => (
+                    <div
+                      key={index}
+                      className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
+                      style={{ backgroundColor: color }}
+                      title={color}
+                    />
+                  ))}
+                </div>
+              </div>
+              {onUpdateAnalysis && (
+                <Button
+                  onClick={onUpdateAnalysis}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Update Analysis
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between">

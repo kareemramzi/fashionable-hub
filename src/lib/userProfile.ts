@@ -3,9 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const getUserProfile = async (userId: string) => {
   try {
-    // First try using a direct query
     const { data, error } = await supabase
-      .from('user_profiles' as any)
+      .from('user_profiles')
       .select('skin_tone, color_palette')
       .eq('user_id', userId)
       .single();
@@ -25,7 +24,7 @@ export const getUserProfile = async (userId: string) => {
 export const saveUserProfile = async (userId: string, skinTone: string, colorPalette: string[]) => {
   try {
     const { error } = await supabase
-      .from('user_profiles' as any)
+      .from('user_profiles')
       .upsert({
         user_id: userId,
         skin_tone: skinTone,

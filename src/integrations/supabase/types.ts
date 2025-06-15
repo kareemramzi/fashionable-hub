@@ -84,6 +84,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_profiles: {
+        Row: {
+          color_palette: Json | null
+          created_at: string
+          id: string
+          skin_tone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color_palette?: Json | null
+          created_at?: string
+          id?: string
+          skin_tone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color_palette?: Json | null
+          created_at?: string
+          id?: string
+          skin_tone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
