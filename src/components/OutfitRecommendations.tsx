@@ -35,7 +35,7 @@ const OutfitRecommendations = ({
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products'],
-    queryFn: fetchProducts,
+    queryFn: () => fetchProducts(),
   });
 
   const { data: session } = useQuery({
@@ -315,7 +315,7 @@ const OutfitRecommendations = ({
                           size="icon"
                           variant="ghost"
                           className="rounded-full text-gray-500 bg-white/80 hover:bg-white"
-                          onClick={() => {}}
+                          onClick={() => onAddToFavorites(product)}
                         >
                           <Heart className="w-4 h-4" />
                         </Button>
@@ -365,13 +365,11 @@ const OutfitRecommendations = ({
                           Add to Cart
                         </Button>
                         <Button
-                          onClick={() => {
-                            addProductToWardrobe(session?.user?.id || '', product.id);
-                            onShopNow()
-                          }}
+                          onClick={() => onAddToFavorites(product)}
                           className="flex-1 bg-purple-600 hover:bg-purple-700"
                         >
-                          Buy Now
+                          <Heart className="w-4 h-4 mr-2" />
+                          Add to Favorites
                         </Button>
                       </div>
                     </CardContent>
