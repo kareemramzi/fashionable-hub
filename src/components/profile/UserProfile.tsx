@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, User, Edit, Save, LogOut, Palette } from "lucide-react";
+import { ArrowLeft, User, Edit, Save, LogOut, Palette, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserProfile } from "@/lib/userProfile";
@@ -39,6 +39,8 @@ const UserProfile = ({ onBack, onSignOut, onUpdateAnalysis }: UserProfileProps) 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      console.log('UserProfile - fetchProfile for user:', user.email, user.id);
+
       setProfile({
         full_name: user.user_metadata?.full_name || "",
         email: user.email || "",
@@ -47,15 +49,22 @@ const UserProfile = ({ onBack, onSignOut, onUpdateAnalysis }: UserProfileProps) 
 
       // Fetch skin analysis data
       const skinAnalysis = await getUserProfile(user.id);
+      console.log('UserProfile - skin analysis result:', skinAnalysis);
+      
       if (skinAnalysis && skinAnalysis.skin_tone) {
+        console.log('UserProfile - Setting skin data:', skinAnalysis);
         setSkinData({
           skin_tone: skinAnalysis.skin_tone,
           color_palette: Array.isArray(skinAnalysis.color_palette) 
             ? skinAnalysis.color_palette.filter((item): item is string => typeof item === 'string')
             : []
         });
+      } else {
+        console.log('UserProfile - No skin analysis found for user');
+        setSkinData(null);
       }
     } catch (error: any) {
+      console.error('UserProfile - Error in fetchProfile:', error);
       toast({
         title: "Error loading profile",
         description: error.message,
@@ -133,7 +142,7 @@ const UserProfile = ({ onBack, onSignOut, onUpdateAnalysis }: UserProfileProps) 
           <h1 className="text-2xl font-bold text-gray-800">Profile</h1>
         </div>
 
-        {skinData && (
+        {skinData ? (
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -164,6 +173,28 @@ const UserProfile = ({ onBack, onSignOut, onUpdateAnalysis }: UserProfileProps) 
                   className="w-full"
                 >
                   Update Analysis
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="shadow-lg border-orange-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-orange-600">
+                <AlertCircle className="w-5 h-5" />
+                No Skin Analysis Found
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-gray-600">
+                You haven't completed a skin tone analysis yet. Complete an analysis to get personalized color recommendations.
+              </p>
+              {onUpdateAnalysis && (
+                <Button
+                  onClick={onUpdateAnalysis}
+                  className="w-full bg-purple-600 hover:bg-purple-700"
+                >
+                  Start Skin Analysis
                 </Button>
               )}
             </CardContent>

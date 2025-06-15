@@ -3,17 +3,27 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const getUserProfile = async (userId: string) => {
   try {
+    console.log('getUserProfile - Fetching profile for user:', userId);
+    
     const { data, error } = await supabase
       .from('user_profiles')
       .select('skin_tone, color_palette')
       .eq('user_id', userId)
       .single();
 
+    console.log('getUserProfile - Query result:', { data, error });
+
     if (error && error.code !== 'PGRST116') {
       console.error('Error fetching user profile:', error);
       return null;
     }
 
+    if (!data) {
+      console.log('getUserProfile - No profile data found for user:', userId);
+      return null;
+    }
+
+    console.log('getUserProfile - Profile data found:', data);
     return data;
   } catch (error) {
     console.error('Error in getUserProfile:', error);
@@ -23,25 +33,43 @@ export const getUserProfile = async (userId: string) => {
 
 export const saveUserProfile = async (userId: string, skinTone: string, colorPalette: string[]) => {
   try {
-    console.log('Attempting to save profile for user:', userId);
-    console.log('Skin tone:', skinTone);
-    console.log('Color palette:', colorPalette);
+    console.log('saveUserProfile - Attempting to save profile for user:', userId);
+    console.log('saveUserProfile - Skin tone:', skinTone);
+    console.log('saveUserProfile - Color palette:', colorPalette);
     
-    const { error } = await supabase
+    // First, check if user profile exists
+    const { data: existingProfile, error: fetchError } = await supabase
+      .from('user_profiles')
+      .select('id, user_id')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    console.log('saveUserProfile - Existing profile check:', { existingProfile, fetchError });
+    
+    if (fetchError) {
+      console.error('saveUserProfile - Error checking existing profile:', fetchError);
+    }
+    
+    const { data, error } = await supabase
       .from('user_profiles')
       .upsert({
         user_id: userId,
         skin_tone: skinTone,
         color_palette: colorPalette,
         updated_at: new Date().toISOString()
-      });
+      }, {
+        onConflict: 'user_id'
+      })
+      .select();
+
+    console.log('saveUserProfile - Upsert result:', { data, error });
 
     if (error) {
       console.error('Supabase error saving user profile:', error);
       return false;
     }
 
-    console.log('Profile saved successfully');
+    console.log('saveUserProfile - Profile saved successfully:', data);
     return true;
   } catch (error) {
     console.error('Error in saveUserProfile:', error);

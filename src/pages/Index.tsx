@@ -93,10 +93,14 @@ const Index = () => {
 
   const fetchUserProfile = async (userId: string) => {
     try {
+      console.log('Index - fetchUserProfile called for user:', userId);
+      
       const [profileData, role] = await Promise.all([
         getUserProfile(userId),
         getUserRole(userId)
       ]);
+      
+      console.log('Index - fetchUserProfile results:', { profileData, role });
       
       setUserRole(role);
       
@@ -109,6 +113,7 @@ const Index = () => {
       }
       
       if (profileData && profileData.skin_tone) {
+        console.log('Index - Setting skin data from profile:', profileData);
         setSkinData({
           skinTone: profileData.skin_tone,
           palette: Array.isArray(profileData.color_palette) 
@@ -116,6 +121,9 @@ const Index = () => {
             : []
         });
         setUserHasSavedAnalysis(true);
+      } else {
+        console.log('Index - No skin analysis data found in profile');
+        setUserHasSavedAnalysis(false);
       }
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
@@ -125,13 +133,16 @@ const Index = () => {
   const handleAnalysisComplete = async (skinTone: string, palette: string[]) => {
     const analysisData = { skinTone, palette };
     
+    console.log('Index - handleAnalysisComplete called:', { skinTone, palette, user: user?.email });
+    
     if (user) {
       // User is authenticated - save to database
       try {
-        console.log('Saving user profile for user:', user.id);
+        console.log('Index - Saving user profile for authenticated user:', user.id, user.email);
         const success = await saveUserProfile(user.id, skinTone, palette);
         
         if (success) {
+          console.log('Index - Profile saved successfully, updating local state');
           setSkinData(analysisData);
           setUserHasSavedAnalysis(true);
           
@@ -144,6 +155,7 @@ const Index = () => {
           });
         } else {
           // Still set the data locally even if save failed
+          console.log('Index - Profile save failed, setting local data only');
           setSkinData(analysisData);
           console.error('Failed to save user profile');
           toast({
@@ -164,6 +176,7 @@ const Index = () => {
       }
     } else {
       // Guest user - save temporarily
+      console.log('Index - Guest user analysis completed');
       setGuestSkinData(analysisData);
       setSkinData(analysisData);
       
