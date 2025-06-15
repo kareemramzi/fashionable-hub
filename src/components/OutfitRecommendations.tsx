@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,17 +40,32 @@ const OutfitRecommendations = ({
 
   const { toast } = useToast();
 
-  const { data: products = [], isLoading } = useQuery({
-    queryKey: ['products'],
-    queryFn: () => fetchProducts(),
-  });
-
   const { data: session } = useQuery({
     queryKey: ['session'],
     queryFn: async () => {
       const { data } = await supabase.auth.getSession();
       return data.session;
     },
+  });
+
+  const { data: userProfile } = useQuery({
+    queryKey: ['user-profile', session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user) return null;
+      const { data } = await supabase
+        .from('user_profiles')
+        .select('gender')
+        .eq('user_id', session.user.id)
+        .single();
+      return data;
+    },
+    enabled: !!session?.user
+  });
+
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ['products', userProfile?.gender],
+    queryFn: () => fetchProducts(undefined, userProfile?.gender),
+    enabled: !!userProfile
   });
 
   const { data: wardrobeItems = [] } = useQuery({

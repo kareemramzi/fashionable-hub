@@ -91,6 +91,7 @@ export type Database = {
           color: string
           created_at: string
           description: string | null
+          gender: Database["public"]["Enums"]["gender_type"]
           id: string
           image_url: string
           is_active: boolean | null
@@ -107,6 +108,7 @@ export type Database = {
           color: string
           created_at?: string
           description?: string | null
+          gender?: Database["public"]["Enums"]["gender_type"]
           id?: string
           image_url: string
           is_active?: boolean | null
@@ -123,6 +125,7 @@ export type Database = {
           color?: string
           created_at?: string
           description?: string | null
+          gender?: Database["public"]["Enums"]["gender_type"]
           id?: string
           image_url?: string
           is_active?: boolean | null
@@ -139,6 +142,7 @@ export type Database = {
         Row: {
           color_palette: Json | null
           created_at: string
+          gender: Database["public"]["Enums"]["gender_type"] | null
           id: string
           role: Database["public"]["Enums"]["user_role"]
           skin_tone: string | null
@@ -148,6 +152,7 @@ export type Database = {
         Insert: {
           color_palette?: Json | null
           created_at?: string
+          gender?: Database["public"]["Enums"]["gender_type"] | null
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
           skin_tone?: string | null
@@ -157,6 +162,7 @@ export type Database = {
         Update: {
           color_palette?: Json | null
           created_at?: string
+          gender?: Database["public"]["Enums"]["gender_type"] | null
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
           skin_tone?: string | null
@@ -220,6 +226,7 @@ export type Database = {
       }
     }
     Enums: {
+      gender_type: "male" | "female" | "unisex"
       user_role: "admin" | "user"
     }
     CompositeTypes: {
@@ -336,6 +343,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      gender_type: ["male", "female", "unisex"],
       user_role: ["admin", "user"],
     },
   },

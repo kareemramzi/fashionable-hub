@@ -37,7 +37,8 @@ const ProductManagement = () => {
     category: "",
     color: "",
     image_url: "",
-    stock_quantity: ""
+    stock_quantity: "",
+    gender: "unisex"
   });
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -57,7 +58,8 @@ const ProductManagement = () => {
       category: "",
       color: "",
       image_url: "",
-      stock_quantity: ""
+      stock_quantity: "",
+      gender: "unisex"
     });
     setShowAddForm(false);
     setEditingProduct(null);
@@ -77,6 +79,7 @@ const ProductManagement = () => {
         color: formData.color,
         image_url: formData.image_url,
         stock_quantity: formData.stock_quantity ? parseInt(formData.stock_quantity) : 0,
+        gender: formData.gender,
         updated_at: new Date().toISOString()
       };
 
@@ -128,14 +131,14 @@ const ProductManagement = () => {
       category: product.category,
       color: product.color,
       image_url: product.image_url,
-      stock_quantity: product.stock_quantity?.toString() || "0"
+      stock_quantity: product.stock_quantity?.toString() || "0",
+      gender: product.gender
     });
     setShowAddForm(true);
   };
 
   const handleDelete = async (productId: string, productName: string) => {
     try {
-      // Actually delete the product instead of just deactivating it
       const { error } = await supabase
         .from('products')
         .delete()
@@ -244,6 +247,20 @@ const ProductManagement = () => {
                       <SelectItem value="bottoms">Bottoms</SelectItem>
                       <SelectItem value="dresses">Dresses</SelectItem>
                       <SelectItem value="outerwear">Outerwear</SelectItem>
+                      <SelectItem value="shoes">Shoes</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="gender">Gender *</Label>
+                  <Select value={formData.gender} onValueChange={(value) => setFormData(prev => ({ ...prev, gender: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="unisex">Unisex</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -310,6 +327,7 @@ const ProductManagement = () => {
                   <p className="text-sm text-gray-600">{product.brand}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <Badge variant="secondary">{product.category}</Badge>
+                    <Badge variant="outline" className="capitalize">{product.gender}</Badge>
                     <span className="text-sm text-gray-500">Stock: {product.stock_quantity}</span>
                   </div>
                 </div>

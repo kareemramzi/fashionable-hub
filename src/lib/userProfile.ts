@@ -1,13 +1,15 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+export type GenderType = 'male' | 'female' | 'unisex';
+
 export const getUserProfile = async (userId: string) => {
   try {
     console.log('getUserProfile - Fetching profile for user:', userId);
     
     const { data, error } = await supabase
       .from('user_profiles')
-      .select('skin_tone, color_palette')
+      .select('skin_tone, color_palette, gender')
       .eq('user_id', userId)
       .single();
 
@@ -31,11 +33,12 @@ export const getUserProfile = async (userId: string) => {
   }
 };
 
-export const saveUserProfile = async (userId: string, skinTone: string, colorPalette: string[]) => {
+export const saveUserProfile = async (userId: string, skinTone: string, colorPalette: string[], gender?: GenderType) => {
   try {
     console.log('saveUserProfile - Attempting to save profile for user:', userId);
     console.log('saveUserProfile - Skin tone:', skinTone);
     console.log('saveUserProfile - Color palette:', colorPalette);
+    console.log('saveUserProfile - Gender:', gender);
     
     // First, check if user profile exists
     const { data: existingProfile, error: fetchError } = await supabase
@@ -50,14 +53,20 @@ export const saveUserProfile = async (userId: string, skinTone: string, colorPal
       console.error('saveUserProfile - Error checking existing profile:', fetchError);
     }
     
+    const profileData: any = {
+      user_id: userId,
+      skin_tone: skinTone,
+      color_palette: colorPalette,
+      updated_at: new Date().toISOString()
+    };
+
+    if (gender) {
+      profileData.gender = gender;
+    }
+    
     const { data, error } = await supabase
       .from('user_profiles')
-      .upsert({
-        user_id: userId,
-        skin_tone: skinTone,
-        color_palette: colorPalette,
-        updated_at: new Date().toISOString()
-      }, {
+      .upsert(profileData, {
         onConflict: 'user_id'
       })
       .select();
