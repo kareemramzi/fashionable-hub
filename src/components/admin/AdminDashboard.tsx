@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +25,7 @@ const AdminDashboard = ({ onBack, onFavorites, onCart, onProfile }: AdminDashboa
     queryFn: async () => {
       const [productsResult, usersResult, ordersResult] = await Promise.all([
         supabase.from('products').select('id', { count: 'exact' }),
-        supabase.from('auth.users').select('id', { count: 'exact' }),
+        supabase.from('user_profiles').select('id', { count: 'exact' }),
         supabase.from('wardrobe_items').select('id', { count: 'exact' })
       ]);
 
