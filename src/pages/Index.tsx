@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +30,7 @@ const Index = () => {
   const [guestSkinData, setGuestSkinData] = useState<{skinTone: string; palette: string[]} | null>(null);
   const [userHasSavedAnalysis, setUserHasSavedAnalysis] = useState(false);
   const [userRole, setUserRole] = useState<'admin' | 'user'>('user');
+  const [isAdminPortal, setIsAdminPortal] = useState(false);
   const { toast } = useToast();
 
   // Function to handle view changes and track navigation history
@@ -71,6 +73,7 @@ const Index = () => {
           // User logged out, clear their saved data but keep guest data
           setSkinData(null);
           setUserHasSavedAnalysis(false);
+          setIsAdminPortal(false);
         }
       }
     );
@@ -95,6 +98,14 @@ const Index = () => {
       ]);
       
       setUserRole(role);
+      
+      // Set admin portal mode if user is admin
+      if (role === 'admin') {
+        setIsAdminPortal(true);
+        resetNavigationHistory("admin");
+      } else {
+        setIsAdminPortal(false);
+      }
       
       if (profileData && profileData.skin_tone) {
         setSkinData({
@@ -201,6 +212,7 @@ const Index = () => {
     setUserHasSavedAnalysis(false);
     setGuestSkinData(null);
     setSelectedStyle(null);
+    setIsAdminPortal(false);
     resetNavigationHistory("home");
   };
 
@@ -225,6 +237,7 @@ const Index = () => {
   // Current skin data (either user's saved data or guest data)
   const currentSkinData = skinData || guestSkinData;
 
+  // If not authenticated, show auth screens
   if (!session) {
     return showSignUp ? (
       <SignUp 
@@ -237,6 +250,23 @@ const Index = () => {
         onSignUpClick={handleSignUp}
         onSignInSuccess={handleSuccessfulAuth}
       />
+    );
+  }
+
+  // If user is admin, show admin portal only
+  if (isAdminPortal && userRole === 'admin') {
+    return (
+      <div className="relative min-h-screen">
+        <AdminDashboard
+          onBack={() => {
+            // Admin can sign out from the dashboard
+            supabase.auth.signOut();
+          }}
+          onFavorites={() => {}} // Disabled for admin
+          onCart={() => {}} // Disabled for admin
+          onProfile={() => changeView("profile")}
+        />
+      </div>
     );
   }
 
@@ -338,15 +368,6 @@ const Index = () => {
             onUpdateAnalysis={handleUpdateAnalysis}
           />
         );
-      case "admin":
-        return (
-          <AdminDashboard
-            onBack={goBack}
-            onFavorites={() => changeView("favorites")}
-            onCart={() => changeView("cart")}
-            onProfile={handleProfileNavigation}
-          />
-        );
       default:
         return (
           <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-20">
@@ -359,17 +380,6 @@ const Index = () => {
               </div>
 
               <div className="grid gap-4">
-                {/* Admin panel for admin users */}
-                {user && userRole === 'admin' && (
-                  <div
-                    onClick={() => changeView("admin")}
-                    className="bg-gradient-to-r from-red-100 to-orange-100 p-6 rounded-xl shadow-xl border border-red-200 cursor-pointer hover:scale-105 transition-all duration-300"
-                  >
-                    <h2 className="text-xl font-bold text-red-800 mb-2">🔧 Admin Dashboard</h2>
-                    <p className="text-red-700">Manage products, users, and platform settings</p>
-                  </div>
-                )}
-
                 {shouldShowAnalysisOption ? (
                   <div
                     onClick={() => currentSkinData ? changeView("styleSelector") : changeView("skinAnalysis")}
@@ -474,6 +484,7 @@ const Index = () => {
     }
   };
 
+  // Regular user interface with bottom navigation
   return (
     <div className="relative min-h-screen">
       {renderCurrentView()}

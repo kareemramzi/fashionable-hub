@@ -202,10 +202,22 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_roles_view: {
+        Row: {
+          email: string | null
+          profile_created_at: string | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          skin_tone: string | null
+          user_created_at: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      make_user_admin: {
+        Args: { user_email: string }
+        Returns: undefined
+      }
     }
     Enums: {
       user_role: "admin" | "user"
