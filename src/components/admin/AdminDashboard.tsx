@@ -21,12 +21,12 @@ const AdminDashboard = ({ onBack, onFavorites, onCart, onProfile }: AdminDashboa
   const [activeTab, setActiveTab] = useState("overview");
   const { toast } = useToast();
 
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats, isLoading, refetch } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: async () => {
       const [productsResult, usersResult, ordersResult] = await Promise.all([
         supabase.from('products').select('id', { count: 'exact' }),
-        supabase.from('user_profiles').select('id', { count: 'exact' }),
+        supabase.from('auth.users').select('id', { count: 'exact' }),
         supabase.from('wardrobe_items').select('id', { count: 'exact' })
       ]);
 
@@ -36,7 +36,15 @@ const AdminDashboard = ({ onBack, onFavorites, onCart, onProfile }: AdminDashboa
         totalOrders: ordersResult.count || 0
       };
     },
+    refetchInterval: 30000, // Refetch every 30 seconds to keep stats updated
   });
+
+  // Refetch stats when switching back to overview tab
+  useEffect(() => {
+    if (activeTab === "overview") {
+      refetch();
+    }
+  }, [activeTab, refetch]);
 
   if (isLoading) {
     return (

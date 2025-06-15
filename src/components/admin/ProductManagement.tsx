@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +13,17 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchProducts, Product } from "@/lib/products";
 import ImageUpload from "./ImageUpload";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const ProductManagement = () => {
   const [showAddForm, setShowAddForm] = useState(false);
@@ -122,19 +134,18 @@ const ProductManagement = () => {
   };
 
   const handleDelete = async (productId: string, productName: string) => {
-    if (!confirm(`Are you sure you want to delete "${productName}"?`)) return;
-
     try {
+      // Actually delete the product instead of just deactivating it
       const { error } = await supabase
         .from('products')
-        .update({ is_active: false })
+        .delete()
         .eq('id', productId);
 
       if (error) throw error;
 
       toast({
         title: "Product deleted",
-        description: `${productName} has been removed from the store`,
+        description: `${productName} has been permanently removed from the store`,
       });
 
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
@@ -303,9 +314,9 @@ const ProductManagement = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-purple-600">${product.price}</p>
+                  <p className="font-bold text-purple-600">{product.price} EGP</p>
                   {product.original_price && product.original_price > product.price && (
-                    <p className="text-sm text-gray-500 line-through">${product.original_price}</p>
+                    <p className="text-sm text-gray-500 line-through">{product.original_price} EGP</p>
                   )}
                 </div>
                 <div className="flex gap-2">
@@ -316,13 +327,33 @@ const ProductManagement = () => {
                   >
                     <Edit className="w-4 h-4" />
                   </Button>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    onClick={() => handleDelete(product.id, product.name)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete "{product.name}" from the store.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(product.id, product.name)}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             </CardContent>
