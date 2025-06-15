@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -86,13 +87,14 @@ const SkinAnalysis = ({ onAnalysisComplete, onBack, onFavorites, onCart, onProfi
           title="Skin Analysis"
         />
         <SkinAnalysisResults
-          uploadedImage={uploadedImage}
-          analysisResults={analysisResults}
-          onContinue={handleContinue}
-          onRetake={() => {
+          capturedImage={uploadedImage}
+          skinTone={analysisResults.skinTone}
+          colorPalette={analysisResults.colorPalette}
+          onBack={() => {
             setUploadedImage(null);
             setAnalysisResults(null);
           }}
+          onContinue={handleContinue}
         />
       </div>
     );
