@@ -64,7 +64,7 @@ const Index = () => {
       if (profileData && profileData.skin_tone) {
         setSkinData({
           skinTone: profileData.skin_tone,
-          palette: profileData.color_palette || []
+          palette: Array.isArray(profileData.color_palette) ? profileData.color_palette : []
         });
         setUserHasSavedAnalysis(true);
       }

@@ -52,7 +52,7 @@ const UserProfile = ({ onBack, onSignOut, onUpdateAnalysis }: UserProfileProps) 
       if (skinAnalysis && skinAnalysis.skin_tone) {
         setSkinData({
           skin_tone: skinAnalysis.skin_tone,
-          color_palette: skinAnalysis.color_palette || []
+          color_palette: Array.isArray(skinAnalysis.color_palette) ? skinAnalysis.color_palette : []
         });
       }
     } catch (error: any) {
