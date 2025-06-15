@@ -392,6 +392,7 @@ const Index = () => {
             onBack={goBack}
             onCart={() => changeView("cart")}
             onProfile={handleProfileNavigation}
+            onShopping={() => changeView("recommendations")}
           />
         );
       case "cart":
@@ -401,6 +402,7 @@ const Index = () => {
             onCheckout={handleCheckout}
             onFavorites={() => changeView("favorites")}
             onProfile={handleProfileNavigation}
+            onShopping={() => changeView("recommendations")}
           />
         );
       case "profile":
