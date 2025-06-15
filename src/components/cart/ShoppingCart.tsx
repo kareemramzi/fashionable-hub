@@ -22,9 +22,10 @@ interface ShoppingCartProps {
   onCheckout: (items: CartItem[], total: number) => void;
   onFavorites: () => void;
   onProfile: () => void;
+  onShopping: () => void;
 }
 
-const ShoppingCart = ({ onBack, onCheckout, onFavorites, onProfile }: ShoppingCartProps) => {
+const ShoppingCart = ({ onBack, onCheckout, onFavorites, onProfile, onShopping }: ShoppingCartProps) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -153,7 +154,7 @@ const ShoppingCart = ({ onBack, onCheckout, onFavorites, onProfile }: ShoppingCa
               <ShoppingBag className="w-16 h-16 mx-auto mb-4 text-gray-400" />
               <h3 className="text-lg font-semibold mb-2">Your cart is empty</h3>
               <p className="text-gray-600 mb-4">Start shopping to add items to your cart</p>
-              <Button onClick={onBack} className="bg-purple-600 hover:bg-purple-700">
+              <Button onClick={onShopping} className="bg-purple-600 hover:bg-purple-700">
                 Continue Shopping
               </Button>
             </CardContent>
