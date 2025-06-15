@@ -5,15 +5,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Plus, ShoppingBag, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { fetchWardrobeItems } from "@/lib/products";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WardrobeItem {
-  id: number;
-  name: string;
-  type: string;
-  color: string;
-  image: string;
-  brand: string;
-  occasion?: string[];
+  id: string;
+  user_id: string;
+  product_id: string;
+  size?: string;
+  purchase_date: string;
+  created_at: string;
+  products: {
+    id: string;
+    name: string;
+    brand: string;
+    category: string;
+    color: string;
+    image_url: string;
+    price: number;
+  };
 }
 
 interface OutfitCombination {
@@ -29,7 +40,7 @@ interface WardrobeManagerProps {
     skinTone: string;
     colorPalette: string[];
     selectedOutfitType: string;
-    wardrobe: WardrobeItem[];
+    wardrobe: any[];
   };
   onProceedToShopping: () => void;
   onBack: () => void;
@@ -38,103 +49,76 @@ interface WardrobeManagerProps {
 
 const WardrobeManager = ({ userProfile, onProceedToShopping, onBack, onProfile }: WardrobeManagerProps) => {
   const [activeTab, setActiveTab] = useState("combinations");
-  const [wardrobeItems, setWardrobeItems] = useState<WardrobeItem[]>([]);
   const [outfitCombinations, setOutfitCombinations] = useState<OutfitCombination[]>([]);
 
-  // Initialize with some sample wardrobe items
+  const { data: session } = useQuery({
+    queryKey: ['session'],
+    queryFn: async () => {
+      const { data } = await supabase.auth.getSession();
+      return data.session;
+    },
+  });
+
+  const { data: wardrobeItems = [], isLoading } = useQuery({
+    queryKey: ['wardrobe-items', session?.user?.id],
+    queryFn: () => session?.user ? fetchWardrobeItems(session.user.id) : Promise.resolve([]),
+    enabled: !!session?.user
+  });
+
   useEffect(() => {
-    const sampleItems: WardrobeItem[] = [
-      {
-        id: 1,
-        name: "White Button Shirt",
-        type: "shirt",
-        color: "#FFFFFF",
-        image: "https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=300&h=400&fit=crop",
-        brand: "Elegant Essentials",
-        occasion: ["formal", "casual"]
-      },
-      {
-        id: 2,
-        name: "Navy Blazer",
-        type: "blazer",
-        color: "#2C3E50",
-        image: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=300&h=400&fit=crop",
-        brand: "Professional Plus",
-        occasion: ["formal", "business"]
-      },
-      {
-        id: 3,
-        name: "Dark Jeans",
-        type: "jeans",
-        color: "#1C2833",
-        image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=300&h=400&fit=crop",
-        brand: "Modern Fit",
-        occasion: ["casual", "weekend"]
-      },
-      {
-        id: 4,
-        name: "Black Trousers",
-        type: "pants",
-        color: "#000000",
-        image: "https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=300&h=400&fit=crop",
-        brand: "Chic Collection",
-        occasion: ["formal", "business"]
-      },
-      {
-        id: 5,
-        name: "Midi Dress",
-        type: "dress",
-        color: userProfile.colorPalette[0] || "#F8E8FF",
-        image: "https://images.unsplash.com/photo-1566479179817-c3e6fba5dde4?w=300&h=400&fit=crop",
-        brand: "Grace & Style",
-        occasion: ["party", "dinner"]
-      }
-    ];
-    setWardrobeItems(sampleItems);
-    generateOutfitCombinations(sampleItems);
-  }, [userProfile.colorPalette]);
+    generateOutfitCombinations(wardrobeItems);
+  }, [wardrobeItems]);
 
   const generateOutfitCombinations = (items: WardrobeItem[]) => {
     const combinations: OutfitCombination[] = [];
 
+    // Group items by category
+    const tops = items.filter(item => item.products?.category === 'tops');
+    const bottoms = items.filter(item => item.products?.category === 'bottoms');
+    const dresses = items.filter(item => item.products?.category === 'dresses');
+    const outerwear = items.filter(item => item.products?.category === 'outerwear');
+
     // Formal combination
-    const formalItems = items.filter(item => 
-      item.occasion?.includes("formal") || item.occasion?.includes("business")
-    );
-    if (formalItems.length >= 2) {
+    if (tops.length > 0 && bottoms.length > 0) {
+      const formalTop = tops[0];
+      const formalBottom = bottoms[0];
+      const formalItems = [formalTop, formalBottom];
+      
+      if (outerwear.length > 0) {
+        formalItems.push(outerwear[0]);
+      }
+
       combinations.push({
         id: 1,
         name: "Professional Look",
         occasion: "Business Meeting",
-        items: formalItems.slice(0, 3),
+        items: formalItems,
         match: 95
       });
     }
 
     // Casual combination
-    const casualItems = items.filter(item => 
-      item.occasion?.includes("casual") || item.type === "jeans"
-    );
-    if (casualItems.length >= 2) {
+    if (tops.length > 0 && bottoms.length > 0) {
+      const casualItems = [tops[Math.min(1, tops.length - 1)] || tops[0], bottoms[Math.min(1, bottoms.length - 1)] || bottoms[0]];
+      
       combinations.push({
         id: 2,
         name: "Smart Casual",
         occasion: "Weekend Brunch",
-        items: casualItems.slice(0, 2),
+        items: casualItems,
         match: 88
       });
     }
 
-    // Party combination
-    const partyItems = items.filter(item => 
-      item.occasion?.includes("party") || item.type === "dress"
-    );
-    if (partyItems.length >= 1) {
+    // Dress combination
+    if (dresses.length > 0) {
+      const dressItems = [dresses[0]];
+      
       combinations.push({
         id: 3,
         name: "Evening Elegance",
         occasion: "Dinner Date",
-        items: partyItems.slice(0, 2),
+        items: dressItems,
         match: 92
       });
     }
@@ -142,10 +126,23 @@ const WardrobeManager = ({ userProfile, onProceedToShopping, onBack, onProfile }
     setOutfitCombinations(combinations);
   };
 
-  const addItemToWardrobe = (item: WardrobeItem) => {
-    setWardrobeItems(prev => [...prev, item]);
-    generateOutfitCombinations([...wardrobeItems, item]);
-  };
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4">
+        <div className="max-w-md mx-auto space-y-6">
+          <div className="flex items-center gap-4 mb-6">
+            <Button variant="ghost" size="icon" onClick={onBack}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <h1 className="text-2xl font-bold text-gray-800">Your Wardrobe</h1>
+          </div>
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4">
@@ -205,17 +202,17 @@ const WardrobeManager = ({ userProfile, onProceedToShopping, onBack, onProfile }
                             {combo.items.map((item) => (
                               <div key={item.id} className="flex-1">
                                 <img
-                                  src={item.image}
-                                  alt={item.name}
+                                  src={item.products?.image_url}
+                                  alt={item.products?.name}
                                   className="w-full h-16 object-cover rounded"
                                 />
-                                <p className="text-xs text-center mt-1 truncate">{item.name}</p>
+                                <p className="text-xs text-center mt-1 truncate">{item.products?.name}</p>
                               </div>
                             ))}
                           </div>
                           
                           <div className="text-sm text-gray-600">
-                            {combo.items.map(item => item.name).join(" + ")}
+                            {combo.items.map(item => item.products?.name).join(" + ")}
                           </div>
                         </CardContent>
                       </Card>
@@ -240,28 +237,31 @@ const WardrobeManager = ({ userProfile, onProceedToShopping, onBack, onProfile }
                       <Card key={item.id} className="border border-gray-200 overflow-hidden">
                         <div className="relative">
                           <img
-                            src={item.image}
-                            alt={item.name}
+                            src={item.products?.image_url}
+                            alt={item.products?.name}
                             className="w-full h-32 object-cover"
                           />
                           <div className="absolute top-2 right-2">
                             <div
                               className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
-                              style={{ backgroundColor: item.color }}
+                              style={{ backgroundColor: item.products?.color }}
                             />
                           </div>
                         </div>
                         <CardContent className="p-3">
-                          <p className="text-sm font-medium truncate">{item.name}</p>
-                          <p className="text-xs text-gray-500">{item.brand}</p>
+                          <p className="text-sm font-medium truncate">{item.products?.name}</p>
+                          <p className="text-xs text-gray-500">{item.products?.brand}</p>
                           <div className="flex items-center justify-between mt-2">
-                            <span className="text-xs text-purple-600 capitalize">{item.type}</span>
-                            {item.occasion && (
+                            <span className="text-xs text-purple-600 capitalize">{item.products?.category}</span>
+                            {item.size && (
                               <Badge variant="secondary" className="text-xs">
-                                {item.occasion[0]}
+                                Size {item.size}
                               </Badge>
                             )}
                           </div>
+                          <p className="text-xs text-gray-400 mt-1">
+                            Added: {new Date(item.created_at).toLocaleDateString()}
+                          </p>
                         </CardContent>
                       </Card>
                     ))}

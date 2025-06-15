@@ -84,11 +84,63 @@ export type Database = {
         }
         Relationships: []
       }
+      products: {
+        Row: {
+          brand: string
+          category: string
+          color: string
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string
+          is_active: boolean | null
+          name: string
+          original_price: number | null
+          price: number
+          rating: number | null
+          stock_quantity: number | null
+          updated_at: string
+        }
+        Insert: {
+          brand: string
+          category: string
+          color: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url: string
+          is_active?: boolean | null
+          name: string
+          original_price?: number | null
+          price: number
+          rating?: number | null
+          stock_quantity?: number | null
+          updated_at?: string
+        }
+        Update: {
+          brand?: string
+          category?: string
+          color?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string
+          is_active?: boolean | null
+          name?: string
+          original_price?: number | null
+          price?: number
+          rating?: number | null
+          stock_quantity?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           color_palette: Json | null
           created_at: string
           id: string
+          role: Database["public"]["Enums"]["user_role"]
           skin_tone: string | null
           updated_at: string
           user_id: string
@@ -97,6 +149,7 @@ export type Database = {
           color_palette?: Json | null
           created_at?: string
           id?: string
+          role?: Database["public"]["Enums"]["user_role"]
           skin_tone?: string | null
           updated_at?: string
           user_id: string
@@ -105,11 +158,47 @@ export type Database = {
           color_palette?: Json | null
           created_at?: string
           id?: string
+          role?: Database["public"]["Enums"]["user_role"]
           skin_tone?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: []
+      }
+      wardrobe_items: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          purchase_date: string | null
+          size: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          purchase_date?: string | null
+          size?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          purchase_date?: string | null
+          size?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wardrobe_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -119,7 +208,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -234,6 +323,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ["admin", "user"],
+    },
   },
 } as const
