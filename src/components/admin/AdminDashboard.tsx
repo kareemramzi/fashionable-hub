@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Package, Users, BarChart3 } from "lucide-react";
+import { Plus, Package, Users, BarChart3, UserCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,17 +26,26 @@ const AdminDashboard = ({ onBack, onFavorites, onCart, onProfile }: AdminDashboa
     queryFn: async () => {
       const [productsResult, profilesResult, ordersResult] = await Promise.all([
         supabase.from('products').select('id', { count: 'exact' }),
-        // Count all user profiles - this represents users who have interacted with the system
+        // Count users with profiles (active users)
         supabase.from('user_profiles').select('id', { count: 'exact' }),
-        supabase.from('wardrobe_items').select('id', { count: 'exact' })
+        // For total orders, we'll use cart_items as a proxy for orders
+        supabase.from('cart_items').select('id', { count: 'exact' })
       ]);
 
-      // For a more accurate user count, we'll use the user_profiles count
-      // but also add a note that this represents active users (those who have created profiles)
-      const totalUsers = profilesResult.count || 0;
+      // Get total registered users from auth (this requires a view or function)
+      // For now, we'll use a workaround by counting from user_roles_view
+      const { data: totalUsersData, error: totalUsersError } = await supabase
+        .from('user_roles_view')
+        .select('email', { count: 'exact' });
+
+      console.log('Total users query result:', { totalUsersData, totalUsersError, count: totalUsersData?.length });
+
+      const activeUsers = profilesResult.count || 0;
+      const totalUsers = totalUsersData?.length || 0;
 
       return {
         totalProducts: productsResult.count || 0,
+        activeUsers: activeUsers,
         totalUsers: totalUsers,
         totalOrders: ordersResult.count || 0
       };
@@ -93,7 +102,7 @@ const AdminDashboard = ({ onBack, onFavorites, onCart, onProfile }: AdminDashboa
           </TabsList>
           
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card className="shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Products</CardTitle>
@@ -107,23 +116,34 @@ const AdminDashboard = ({ onBack, onFavorites, onCart, onProfile }: AdminDashboa
 
               <Card className="shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
                   <Users className="h-4 w-4 text-purple-600" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
+                  <p className="text-xs text-muted-foreground">All registered accounts</p>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+                  <UserCheck className="h-4 w-4 text-purple-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats?.activeUsers || 0}</div>
                   <p className="text-xs text-muted-foreground">Users with profiles created</p>
                 </CardContent>
               </Card>
 
               <Card className="shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Wardrobe Items</CardTitle>
+                  <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
                   <BarChart3 className="h-4 w-4 text-purple-600" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats?.totalOrders || 0}</div>
-                  <p className="text-xs text-muted-foreground">Items in user wardrobes</p>
+                  <p className="text-xs text-muted-foreground">Items in shopping carts</p>
                 </CardContent>
               </Card>
             </div>
@@ -145,12 +165,14 @@ const AdminDashboard = ({ onBack, onFavorites, onCart, onProfile }: AdminDashboa
 
             <Card className="shadow-lg">
               <CardHeader>
-                <CardTitle>User Statistics Note</CardTitle>
+                <CardTitle>User Statistics Explanation</CardTitle>
               </CardHeader>
               <CardContent>
+                <p className="text-sm text-gray-600 mb-2">
+                  <strong>Total Users:</strong> All registered accounts in the system, whether they have completed their profile or not.
+                </p>
                 <p className="text-sm text-gray-600">
-                  The "Active Users" count shows users who have created profiles by completing skin analysis or other profile actions. 
-                  This may be lower than the total number of registered accounts, as some users may have signed up but not yet completed their profile setup.
+                  <strong>Active Users:</strong> Users who have created profiles by completing skin analysis or other profile actions.
                 </p>
               </CardContent>
             </Card>
