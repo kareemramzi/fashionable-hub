@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Sparkles, Zap, Heart, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -28,7 +28,7 @@ const SignUp = ({ onBack, onSignInClick }: SignUpProps) => {
     if (password !== confirmPassword) {
       toast({
         title: "Password mismatch",
-        description: "Passwords do not match",
+        description: "Passwords do not match. Please try again!",
         variant: "destructive",
       });
       return;
@@ -46,6 +46,8 @@ const SignUp = ({ onBack, onSignInClick }: SignUpProps) => {
     setIsLoading(true);
 
     try {
+      const redirectUrl = `${window.location.origin}/`;
+      
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -53,14 +55,15 @@ const SignUp = ({ onBack, onSignInClick }: SignUpProps) => {
           data: {
             full_name: fullName,
           },
+          emailRedirectTo: redirectUrl,
         },
       });
 
       if (error) throw error;
 
       toast({
-        title: "Account created!",
-        description: "Please check your email to verify your account.",
+        title: "Welcome to GRWMe! 🌟",
+        description: "Account created! Please check your email to verify your account and start your style journey.",
       });
       
       onSignInClick();
@@ -76,26 +79,51 @@ const SignUp = ({ onBack, onSignInClick }: SignUpProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4">
-      <div className="max-w-md mx-auto space-y-6">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" size="icon" onClick={onBack}>
+    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-cyan-100 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-pink-400 to-purple-600 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-40 left-40 w-80 h-80 bg-gradient-to-br from-yellow-400 to-pink-600 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+      </div>
+
+      <div className="relative z-10 max-w-md mx-auto space-y-6 p-4">
+        <div className="flex items-center gap-4 mb-6 pt-6">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onBack}
+            className="bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all duration-300 hover:scale-110"
+          >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-2xl font-bold text-gray-800">Sign Up</h1>
+          <div className="flex-1 text-center">
+            <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-600 via-purple-600 to-cyan-600">
+              Join GRWMe!
+            </h1>
+            <p className="text-gray-600 text-sm">Start your style transformation today ✨</p>
+          </div>
         </div>
 
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle>Create Account</CardTitle>
+        <Card className="shadow-2xl bg-white/80 backdrop-blur-xl border border-white/30">
+          <CardHeader className="text-center">
+            <CardTitle className="flex items-center justify-center gap-2">
+              <div className="relative">
+                <Star className="w-6 h-6 text-yellow-500 animate-pulse" />
+                <Heart className="w-3 h-3 absolute -top-1 -right-1 text-pink-500 animate-bounce" />
+              </div>
+              <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                Create Account
+              </span>
+            </CardTitle>
             <CardDescription>
-              Join FashionAI to get personalized style recommendations
+              Join thousands of style enthusiasts on GRWMe and discover your perfect look
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSignUp} className="space-y-4">
+            <form onSubmit={handleSignUp} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
+                <Label htmlFor="fullName" className="font-medium text-gray-700">Full Name</Label>
                 <Input
                   id="fullName"
                   type="text"
@@ -103,11 +131,12 @@ const SignUp = ({ onBack, onSignInClick }: SignUpProps) => {
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Enter your full name"
                   required
+                  className="bg-white/70 border-purple-200 focus:border-purple-400 focus:ring-purple-400 transition-all duration-300"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="font-medium text-gray-700">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -115,26 +144,28 @@ const SignUp = ({ onBack, onSignInClick }: SignUpProps) => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
                   required
+                  className="bg-white/70 border-purple-200 focus:border-purple-400 focus:ring-purple-400 transition-all duration-300"
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="font-medium text-gray-700">Password</Label>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
+                    placeholder="Create a strong password"
                     required
                     minLength={6}
+                    className="bg-white/70 border-purple-200 focus:border-purple-400 focus:ring-purple-400 transition-all duration-300"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-purple-100"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -143,7 +174,7 @@ const SignUp = ({ onBack, onSignInClick }: SignUpProps) => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword" className="font-medium text-gray-700">Confirm Password</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -151,25 +182,53 @@ const SignUp = ({ onBack, onSignInClick }: SignUpProps) => {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm your password"
                   required
+                  className="bg-white/70 border-purple-200 focus:border-purple-400 focus:ring-purple-400 transition-all duration-300"
                 />
               </div>
 
               <Button
                 type="submit"
-                className="w-full bg-purple-600 hover:bg-purple-700"
+                className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-600 hover:from-purple-700 hover:via-pink-700 hover:to-cyan-700 text-white py-6 text-lg font-bold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 relative overflow-hidden group"
                 disabled={isLoading}
               >
-                {isLoading ? "Creating Account..." : "Create Account"}
+                <div className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Creating Your Account...
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 animate-spin" />
+                    Start My Glow Up Journey
+                    <Zap className="w-5 h-5" />
+                  </div>
+                )}
               </Button>
             </form>
 
-            <div className="mt-4 text-center">
+            <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 Already have an account?{" "}
-                <Button variant="link" onClick={onSignInClick} className="p-0 h-auto text-purple-600">
-                  Sign in here
+                <Button 
+                  variant="link" 
+                  onClick={onSignInClick} 
+                  className="p-0 h-auto text-purple-600 hover:text-pink-600 font-bold transition-colors"
+                >
+                  Sign in here! 💜
                 </Button>
               </p>
+            </div>
+
+            {/* Fun benefits section */}
+            <div className="mt-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-200">
+              <h4 className="font-bold text-center text-gray-800 mb-2">🌟 What you'll get:</h4>
+              <ul className="text-xs text-gray-600 space-y-1">
+                <li>✨ Personalized color analysis</li>
+                <li>💫 AI-powered style recommendations</li>
+                <li>🛍️ Curated shopping suggestions</li>
+                <li>👗 Virtual wardrobe management</li>
+              </ul>
             </div>
           </CardContent>
         </Card>
