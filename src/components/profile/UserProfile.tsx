@@ -1,13 +1,13 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, User, Edit, Save, LogOut, Palette, AlertCircle } from "lucide-react";
+import { ArrowLeft, User, Edit, Save, LogOut, Palette, AlertCircle, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { getUserProfile } from "@/lib/userProfile";
+import { getUserProfile, saveUserProfile, GenderType } from "@/lib/userProfile";
+import GenderSelector from "@/components/GenderSelector";
 
 interface UserProfileProps {
   onBack: () => void;
@@ -24,10 +24,13 @@ const UserProfile = ({ onBack, onSignOut, onUpdateAnalysis }: UserProfileProps) 
   const [skinData, setSkinData] = useState<{
     skin_tone: string;
     color_palette: string[];
+    gender?: GenderType;
   } | null>(null);
+  const [selectedGender, setSelectedGender] = useState<'male' | 'female' | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUpdatingGender, setIsUpdatingGender] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -47,18 +50,22 @@ const UserProfile = ({ onBack, onSignOut, onUpdateAnalysis }: UserProfileProps) 
         phone: user.user_metadata?.phone || "",
       });
 
-      // Fetch skin analysis data
+      // Fetch skin analysis data and gender
       const skinAnalysis = await getUserProfile(user.id);
       console.log('UserProfile - skin analysis result:', skinAnalysis);
       
-      if (skinAnalysis && skinAnalysis.skin_tone) {
-        console.log('UserProfile - Setting skin data:', skinAnalysis);
+      if (skinAnalysis) {
         setSkinData({
-          skin_tone: skinAnalysis.skin_tone,
+          skin_tone: skinAnalysis.skin_tone || "",
           color_palette: Array.isArray(skinAnalysis.color_palette) 
             ? skinAnalysis.color_palette.filter((item): item is string => typeof item === 'string')
-            : []
+            : [],
+          gender: skinAnalysis.gender
         });
+        
+        if (skinAnalysis.gender && (skinAnalysis.gender === 'male' || skinAnalysis.gender === 'female')) {
+          setSelectedGender(skinAnalysis.gender);
+        }
       } else {
         console.log('UserProfile - No skin analysis found for user');
         setSkinData(null);
@@ -104,6 +111,45 @@ const UserProfile = ({ onBack, onSignOut, onUpdateAnalysis }: UserProfileProps) 
     }
   };
 
+  const handleGenderSelected = async (gender: 'male' | 'female') => {
+    setIsUpdatingGender(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Save gender to user profile
+      const success = await saveUserProfile(
+        user.id, 
+        skinData?.skin_tone || "", 
+        skinData?.color_palette || [], 
+        gender
+      );
+
+      if (success) {
+        setSelectedGender(gender);
+        setSkinData(prev => prev ? { ...prev, gender } : { skin_tone: "", color_palette: [], gender });
+        toast({
+          title: "Gender updated",
+          description: "Your gender preference has been saved",
+        });
+      } else {
+        toast({
+          title: "Error updating gender",
+          description: "Could not save your gender preference",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error updating gender",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingGender(false);
+    }
+  };
+
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut();
@@ -142,7 +188,33 @@ const UserProfile = ({ onBack, onSignOut, onUpdateAnalysis }: UserProfileProps) 
           <h1 className="text-2xl font-bold text-gray-800">Profile</h1>
         </div>
 
-        {skinData ? (
+        {/* Gender Selection Card */}
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-purple-600" />
+              Gender Preference
+            </CardTitle>
+            <p className="text-sm text-gray-600">
+              Help us personalize your shopping experience
+            </p>
+          </CardHeader>
+          <CardContent>
+            {isUpdatingGender ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
+                <span className="ml-2">Updating...</span>
+              </div>
+            ) : (
+              <GenderSelector
+                onGenderSelected={handleGenderSelected}
+                selectedGender={selectedGender}
+              />
+            )}
+          </CardContent>
+        </Card>
+
+        {skinData && skinData.skin_tone ? (
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
