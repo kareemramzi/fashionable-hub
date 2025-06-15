@@ -27,9 +27,14 @@ const OutfitStyleSelector = ({ skinTone, colorPalette, onStyleSelected, onBack }
 
   const handleContinue = () => {
     if (selectedStyle) {
-      console.log('Selected style:', selectedStyle);
+      console.log('OutfitStyleSelector - Selected style:', selectedStyle);
       onStyleSelected(selectedStyle);
     }
+  };
+
+  const handleStyleSelection = (occasionId: string) => {
+    console.log('OutfitStyleSelector - Style selected:', occasionId);
+    setSelectedStyle(occasionId);
   };
 
   return (
@@ -80,7 +85,7 @@ const OutfitStyleSelector = ({ skinTone, colorPalette, onStyleSelected, onBack }
                       ? 'border-purple-600 bg-purple-50'
                       : 'border-gray-200 hover:border-purple-300'
                   }`}
-                  onClick={() => setSelectedStyle(occasion.id)}
+                  onClick={() => handleStyleSelection(occasion.id)}
                 >
                   <div className="flex items-center justify-between">
                     <div>

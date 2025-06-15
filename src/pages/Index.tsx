@@ -35,6 +35,7 @@ const Index = () => {
   // Function to handle view changes and track navigation history
   const changeView = (newView: string) => {
     if (newView !== currentView) {
+      console.log('Index - Changing view from', currentView, 'to', newView);
       setNavigationHistory(prev => [...prev, newView]);
       setCurrentView(newView);
     }
@@ -169,8 +170,9 @@ const Index = () => {
   };
 
   const handleStyleSelected = (occasion: string) => {
-    console.log('Style selected in Index:', occasion);
+    console.log('Index - Style selected:', occasion);
     setSelectedStyle(occasion);
+    console.log('Index - Navigating to outfitRecommendations');
     changeView("outfitRecommendations");
   };
 
@@ -271,9 +273,9 @@ const Index = () => {
   }
 
   const renderCurrentView = () => {
-    console.log('Current view:', currentView);
-    console.log('Selected style:', selectedStyle);
-    console.log('Current skin data:', currentSkinData);
+    console.log('Index - Current view:', currentView);
+    console.log('Index - Selected style:', selectedStyle);
+    console.log('Index - Current skin data:', currentSkinData);
     
     switch (currentView) {
       case "skinAnalysis":
@@ -296,8 +298,9 @@ const Index = () => {
           />
         );
       case "outfitRecommendations":
+        console.log('Index - Rendering outfitRecommendations with style:', selectedStyle);
         if (!selectedStyle || !currentSkinData) {
-          // Fallback if data is missing
+          console.log('Index - Missing data, redirecting to styleSelector');
           changeView("styleSelector");
           return null;
         }
