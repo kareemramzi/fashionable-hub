@@ -296,19 +296,24 @@ const Index = () => {
           />
         );
       case "outfitRecommendations":
+        if (!selectedStyle || !currentSkinData) {
+          // Fallback if data is missing
+          changeView("styleSelector");
+          return null;
+        }
         return (
           <OutfitRecommendations
-            occasion={selectedStyle || "casual"}
-            skinTone={currentSkinData?.skinTone || ""}
-            colorPalette={currentSkinData?.palette || []}
+            occasion={selectedStyle}
+            skinTone={currentSkinData.skinTone}
+            colorPalette={currentSkinData.palette}
             onBack={goBack}
             onAddToWardrobe={(item) => {
-              // Add item to wardrobe logic can be implemented here
               toast({
                 title: "Added to Wardrobe! 👗",
                 description: `${item.name} has been added to your wardrobe`,
               });
             }}
+            onShopNow={() => changeView("recommendations")}
           />
         );
       case "recommendations":

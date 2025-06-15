@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, ShoppingCart, Star, ArrowLeft } from "lucide-react";
+import { Heart, ShoppingCart, Star, ArrowLeft, Palette } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface OutfitRecommendationsProps {
@@ -12,9 +12,17 @@ interface OutfitRecommendationsProps {
   colorPalette: string[];
   onBack: () => void;
   onAddToWardrobe: (item: any) => void;
+  onShopNow: () => void;
 }
 
-const OutfitRecommendations = ({ occasion, skinTone, colorPalette, onBack, onAddToWardrobe }: OutfitRecommendationsProps) => {
+const OutfitRecommendations = ({ 
+  occasion, 
+  skinTone, 
+  colorPalette, 
+  onBack, 
+  onAddToWardrobe,
+  onShopNow 
+}: OutfitRecommendationsProps) => {
   const [favorites, setFavorites] = useState<number[]>([]);
   const { toast } = useToast();
 
@@ -38,6 +46,26 @@ const OutfitRecommendations = ({ occasion, skinTone, colorPalette, onBack, onAdd
         { id: 10, type: "heels", name: "Strappy Heels", price: 119.99, image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300&h=400&fit=crop" },
         { id: 11, type: "clutch", name: "Evening Clutch", price: 59.99, image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=300&h=400&fit=crop" },
         { id: 12, type: "jewelry", name: "Statement Earrings", price: 39.99, image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=300&h=400&fit=crop" }
+      ],
+      business: [
+        { id: 13, type: "blazer", name: "Business Blazer", price: 139.99, image: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=300&h=400&fit=crop" },
+        { id: 14, type: "pants", name: "Straight Leg Trousers", price: 89.99, image: "https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=300&h=400&fit=crop" }
+      ],
+      weekend: [
+        { id: 15, type: "sweater", name: "Cozy Sweater", price: 59.99, image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=300&h=400&fit=crop" },
+        { id: 16, type: "jeans", name: "Relaxed Jeans", price: 69.99, image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=300&h=400&fit=crop" }
+      ],
+      workout: [
+        { id: 17, type: "sports bra", name: "Athletic Sports Bra", price: 39.99, image: "https://images.unsplash.com/photo-1506629905607-24fa5e4e8d7d?w=300&h=400&fit=crop" },
+        { id: 18, type: "leggings", name: "High-Waist Leggings", price: 49.99, image: "https://images.unsplash.com/photo-1506629905607-24fa5e4e8d7d?w=300&h=400&fit=crop" }
+      ],
+      travel: [
+        { id: 19, type: "jacket", name: "Travel Jacket", price: 89.99, image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=300&h=400&fit=crop" },
+        { id: 20, type: "pants", name: "Comfortable Pants", price: 59.99, image: "https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=300&h=400&fit=crop" }
+      ],
+      date: [
+        { id: 21, type: "dress", name: "Date Night Dress", price: 129.99, image: "https://images.unsplash.com/photo-1566479179817-c3e6fba5dde4?w=300&h=400&fit=crop" },
+        { id: 22, type: "heels", name: "Elegant Heels", price: 99.99, image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300&h=400&fit=crop" }
       ]
     };
 
@@ -82,7 +110,10 @@ const OutfitRecommendations = ({ occasion, skinTone, colorPalette, onBack, onAdd
 
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Perfect Outfit Combination</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Palette className="w-5 h-5 text-purple-600" />
+              Your Perfect Colors
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-600 mb-2">
@@ -101,13 +132,14 @@ const OutfitRecommendations = ({ occasion, skinTone, colorPalette, onBack, onAdd
         </Card>
 
         <div className="space-y-4">
+          <h2 className="text-xl font-bold text-gray-800">Perfect Outfit Combinations</h2>
           {recommendations.map((item) => (
             <Card key={item.id} className="shadow-lg overflow-hidden">
-              <div className="relative">
+              <div className="relative bg-gray-50">
                 <img
                   src={item.image}
                   alt={item.name}
-                  className="w-full h-48 object-cover"
+                  className="w-full h-48 object-contain"
                 />
                 <div className="absolute top-2 right-2 flex gap-2">
                   <Badge className="bg-green-100 text-green-800">
@@ -163,6 +195,16 @@ const OutfitRecommendations = ({ occasion, skinTone, colorPalette, onBack, onAdd
               </CardContent>
             </Card>
           ))}
+        </div>
+
+        <div className="space-y-3">
+          <Button
+            onClick={onShopNow}
+            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 py-6 text-lg"
+            size="lg"
+          >
+            Browse More in Shop
+          </Button>
         </div>
       </div>
     </div>
