@@ -15,7 +15,8 @@ import UserProfile from "@/components/profile/UserProfile";
 import BottomNavBar from "@/components/navigation/BottomNavBar";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 import { Session, User } from "@supabase/supabase-js";
-import { getUserProfile, saveUserProfile, getUserRole } from "@/lib/userProfile";
+import { getUserProfile, saveUserProfile } from "@/lib/userProfile";
+import { getUserRole } from "@/lib/products";
 
 const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
