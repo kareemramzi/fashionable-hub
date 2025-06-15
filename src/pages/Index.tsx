@@ -50,9 +50,10 @@ const Index = () => {
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      // Use a raw SQL query to avoid TypeScript issues with the new table
       const { data, error } = await supabase
-        .rpc('get_user_profile', { user_id: userId })
+        .from('user_profiles' as any)
+        .select('skin_tone, color_palette')
+        .eq('user_id', userId)
         .single();
 
       if (error && error.code !== 'PGRST116') {
@@ -67,28 +68,7 @@ const Index = () => {
         });
       }
     } catch (error) {
-      // Fallback: try direct table access
-      try {
-        const { data, error: directError } = await supabase
-          .from('user_profiles' as any)
-          .select('skin_tone, color_palette')
-          .eq('user_id', userId)
-          .single();
-
-        if (directError && directError.code !== 'PGRST116') {
-          console.error('Error fetching user profile:', directError);
-          return;
-        }
-
-        if (data && data.skin_tone && data.color_palette) {
-          setSkinData({
-            skinTone: data.skin_tone,
-            palette: data.color_palette
-          });
-        }
-      } catch (fallbackError) {
-        console.error('Error in fetchUserProfile fallback:', fallbackError);
-      }
+      console.error('Error in fetchUserProfile:', error);
     }
   };
 
@@ -179,17 +159,21 @@ const Index = () => {
           <OutfitSelector
             skinTone={skinData?.skinTone || ""}
             colorPalette={skinData?.palette || []}
+            onOutfitSelected={(outfitType: string) => setCurrentView("wardrobeManager")}
             onBack={() => setCurrentView("home")}
-            onCart={() => setCurrentView("cart")}
-            onProfile={() => setCurrentView("profile")}
           />
         );
       case "wardrobeManager":
         return (
           <WardrobeManager
+            userProfile={{
+              skinTone: skinData?.skinTone || "",
+              colorPalette: skinData?.palette || [],
+              selectedOutfitType: "casual",
+              wardrobe: []
+            }}
+            onProceedToShopping={() => setCurrentView("recommendations")}
             onBack={() => setCurrentView("home")}
-            onCart={() => setCurrentView("cart")}
-            onProfile={() => setCurrentView("profile")}
           />
         );
       case "favorites":
