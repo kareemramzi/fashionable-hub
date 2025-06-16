@@ -151,6 +151,8 @@ const ShoppingCart = ({ onBack, onCheckout, onFavorites, onProfile, onShopping }
 
     setIsCheckingOut(true);
     try {
+      console.log('Starting checkout with items:', cartItems);
+      
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: {
           items: cartItems,
@@ -159,15 +161,21 @@ const ShoppingCart = ({ onBack, onCheckout, onFavorites, onProfile, onShopping }
         }
       });
 
-      if (error) throw error;
+      console.log('Checkout response:', { data, error });
+
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
 
       if (data?.url) {
+        console.log('Redirecting to:', data.url);
         // Open Stripe checkout in a new tab
         window.open(data.url, '_blank');
         
         toast({
           title: "Redirecting to payment",
-          description: "Opening Stripe checkout in a new tab",
+          description: "Opening checkout in a new tab",
         });
       } else {
         throw new Error("No checkout URL received");
@@ -302,7 +310,7 @@ const ShoppingCart = ({ onBack, onCheckout, onFavorites, onProfile, onShopping }
                   <div className="border-t pt-4">
                     <div className="flex justify-between font-bold text-lg mb-4">
                       <span>Total</span>
-                      <span>${calculateTotal().toFixed(2)}</span>
+                      <span>EGP {calculateTotal().toFixed(2)}</span>
                     </div>
                     <div className="flex gap-2">
                       <Button
@@ -325,7 +333,7 @@ const ShoppingCart = ({ onBack, onCheckout, onFavorites, onProfile, onShopping }
                         ) : (
                           <div className="flex items-center gap-2">
                             <CreditCard className="w-4 h-4" />
-                            Pay with Stripe
+                            Pay with Card
                           </div>
                         )}
                       </Button>
@@ -342,7 +350,7 @@ const ShoppingCart = ({ onBack, onCheckout, onFavorites, onProfile, onShopping }
                   <div className="space-y-2 mb-4">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
-                      <span>${calculateTotal().toFixed(2)}</span>
+                      <span>EGP {calculateTotal().toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Shipping</span>
@@ -351,7 +359,7 @@ const ShoppingCart = ({ onBack, onCheckout, onFavorites, onProfile, onShopping }
                     <div className="border-t pt-2">
                       <div className="flex justify-between font-bold text-lg">
                         <span>Total</span>
-                        <span>${calculateTotal().toFixed(2)}</span>
+                        <span>EGP {calculateTotal().toFixed(2)}</span>
                       </div>
                     </div>
                   </div>

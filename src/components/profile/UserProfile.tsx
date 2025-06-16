@@ -3,11 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, User, Edit, Save, LogOut, Palette, AlertCircle, Users } from "lucide-react";
+import { ArrowLeft, User, Edit, Save, LogOut, Palette, AlertCircle, Users, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserProfile, saveUserProfile, GenderType } from "@/lib/userProfile";
 import GenderSelector from "@/components/GenderSelector";
+import LanguageSelector from "./LanguageSelector";
+import CurrencySelector from "./CurrencySelector";
 
 interface UserProfileProps {
   onBack: () => void;
@@ -27,6 +29,8 @@ const UserProfile = ({ onBack, onSignOut, onUpdateAnalysis }: UserProfileProps) 
     gender?: GenderType;
   } | null>(null);
   const [selectedGender, setSelectedGender] = useState<'male' | 'female' | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [selectedCurrency, setSelectedCurrency] = useState('EGP');
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -35,7 +39,39 @@ const UserProfile = ({ onBack, onSignOut, onUpdateAnalysis }: UserProfileProps) 
 
   useEffect(() => {
     fetchProfile();
+    loadPreferences();
   }, []);
+
+  const loadPreferences = () => {
+    // Load from localStorage
+    const savedLanguage = localStorage.getItem('app-language') || 'en';
+    const savedCurrency = localStorage.getItem('app-currency') || 'EGP';
+    setSelectedLanguage(savedLanguage);
+    setSelectedCurrency(savedCurrency);
+  };
+
+  const savePreferences = (language: string, currency: string) => {
+    localStorage.setItem('app-language', language);
+    localStorage.setItem('app-currency', currency);
+  };
+
+  const handleLanguageChange = (language: string) => {
+    setSelectedLanguage(language);
+    savePreferences(language, selectedCurrency);
+    toast({
+      title: "Language updated",
+      description: "Your language preference has been saved",
+    });
+  };
+
+  const handleCurrencyChange = (currency: string) => {
+    setSelectedCurrency(currency);
+    savePreferences(selectedLanguage, currency);
+    toast({
+      title: "Currency updated",
+      description: "Your currency preference has been saved",
+    });
+  };
 
   const fetchProfile = async () => {
     try {
@@ -187,6 +223,26 @@ const UserProfile = ({ onBack, onSignOut, onUpdateAnalysis }: UserProfileProps) 
           </Button>
           <h1 className="text-2xl font-bold text-gray-800">Profile</h1>
         </div>
+
+        {/* Language and Currency Settings */}
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="w-5 h-5 text-purple-600" />
+              App Settings
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <LanguageSelector 
+              selectedLanguage={selectedLanguage}
+              onLanguageChange={handleLanguageChange}
+            />
+            <CurrencySelector 
+              selectedCurrency={selectedCurrency}
+              onCurrencyChange={handleCurrencyChange}
+            />
+          </CardContent>
+        </Card>
 
         {/* Gender Selection Card */}
         <Card className="shadow-lg">

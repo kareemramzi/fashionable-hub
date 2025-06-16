@@ -105,7 +105,7 @@ const CheckoutSuccess = ({ onContinueShopping, onViewOrders }: CheckoutSuccessPr
               {orderDetails && (
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="text-sm text-gray-600">Order ID: <span className="font-mono">{orderDetails.id}</span></p>
-                  <p className="text-sm text-gray-600">Total: <span className="font-semibold">${(orderDetails.amount / 100).toFixed(2)}</span></p>
+                  <p className="text-sm text-gray-600">Total: <span className="font-semibold">EGP {(orderDetails.amount / 100).toFixed(2)}</span></p>
                 </div>
               )}
             </div>
