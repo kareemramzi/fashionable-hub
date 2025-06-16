@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +15,7 @@ import ShoppingCart from "@/components/cart/ShoppingCart";
 import UserProfile from "@/components/profile/UserProfile";
 import BottomNavBar from "@/components/navigation/BottomNavBar";
 import AdminDashboard from "@/components/admin/AdminDashboard";
+import CheckoutSuccess from "@/components/checkout/CheckoutSuccess";
 import { Session, User } from "@supabase/supabase-js";
 import { getUserProfile, saveUserProfile } from "@/lib/userProfile";
 import { getUserRole } from "@/lib/products";

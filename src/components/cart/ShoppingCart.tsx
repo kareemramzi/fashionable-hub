@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Minus, Plus, ShoppingBag, Trash2, Heart } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Minus, Plus, ShoppingBag, Trash2, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import TopNavBar from "../navigation/TopNavBar";
@@ -28,11 +30,23 @@ interface ShoppingCartProps {
 const ShoppingCart = ({ onBack, onCheckout, onFavorites, onProfile, onShopping }: ShoppingCartProps) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [showCheckoutForm, setShowCheckoutForm] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchCartItems();
+    loadUserEmail();
   }, []);
+
+  const loadUserEmail = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.email) {
+      setCustomerEmail(user.email);
+    }
+  };
 
   const fetchCartItems = async () => {
     try {
@@ -113,7 +127,7 @@ const ShoppingCart = ({ onBack, onCheckout, onFavorites, onProfile, onShopping }
     return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
 
-  const handleCheckout = () => {
+  const handleProceedToCheckout = () => {
     if (cartItems.length === 0) {
       toast({
         title: "Cart is empty",
@@ -122,7 +136,52 @@ const ShoppingCart = ({ onBack, onCheckout, onFavorites, onProfile, onShopping }
       });
       return;
     }
-    onCheckout(cartItems, calculateTotal());
+    setShowCheckoutForm(true);
+  };
+
+  const handleStripeCheckout = async () => {
+    if (!customerEmail.trim()) {
+      toast({
+        title: "Email required",
+        description: "Please provide your email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsCheckingOut(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: {
+          items: cartItems,
+          customer_email: customerEmail.trim(),
+          customer_name: customerName.trim() || undefined,
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        // Open Stripe checkout in a new tab
+        window.open(data.url, '_blank');
+        
+        toast({
+          title: "Redirecting to payment",
+          description: "Opening Stripe checkout in a new tab",
+        });
+      } else {
+        throw new Error("No checkout URL received");
+      }
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      toast({
+        title: "Checkout failed",
+        description: error.message || "Failed to create checkout session",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCheckingOut(false);
+    }
   };
 
   if (isLoading) {
@@ -214,36 +273,98 @@ const ShoppingCart = ({ onBack, onCheckout, onFavorites, onProfile, onShopping }
               ))}
             </div>
 
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 mb-4">
-                  <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span>${calculateTotal().toFixed(2)}</span>
+            {showCheckoutForm ? (
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle>Checkout Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="customerName">Full Name (Optional)</Label>
+                    <Input
+                      id="customerName"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      placeholder="Enter your full name"
+                    />
                   </div>
-                  <div className="flex justify-between">
-                    <span>Shipping</span>
-                    <span>Free</span>
+                  <div>
+                    <Label htmlFor="customerEmail">Email Address *</Label>
+                    <Input
+                      id="customerEmail"
+                      type="email"
+                      value={customerEmail}
+                      onChange={(e) => setCustomerEmail(e.target.value)}
+                      placeholder="Enter your email"
+                      required
+                    />
                   </div>
-                  <div className="border-t pt-2">
-                    <div className="flex justify-between font-bold text-lg">
+                  <div className="border-t pt-4">
+                    <div className="flex justify-between font-bold text-lg mb-4">
                       <span>Total</span>
                       <span>${calculateTotal().toFixed(2)}</span>
                     </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowCheckoutForm(false)}
+                        className="flex-1"
+                      >
+                        Back
+                      </Button>
+                      <Button
+                        onClick={handleStripeCheckout}
+                        disabled={isCheckingOut}
+                        className="flex-1 bg-purple-600 hover:bg-purple-700"
+                      >
+                        {isCheckingOut ? (
+                          <div className="flex items-center gap-2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            Processing...
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <CreditCard className="w-4 h-4" />
+                            Pay with Stripe
+                          </div>
+                        )}
+                      </Button>
+                    </div>
                   </div>
-                </div>
-                <Button
-                  onClick={handleCheckout}
-                  className="w-full bg-purple-600 hover:bg-purple-700 py-6 text-lg"
-                  size="lg"
-                >
-                  Proceed to Checkout
-                </Button>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle>Order Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex justify-between">
+                      <span>Subtotal</span>
+                      <span>${calculateTotal().toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Shipping</span>
+                      <span>Free</span>
+                    </div>
+                    <div className="border-t pt-2">
+                      <div className="flex justify-between font-bold text-lg">
+                        <span>Total</span>
+                        <span>${calculateTotal().toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={handleProceedToCheckout}
+                    className="w-full bg-purple-600 hover:bg-purple-700 py-6 text-lg"
+                    size="lg"
+                  >
+                    Proceed to Checkout
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </>
         )}
       </div>
