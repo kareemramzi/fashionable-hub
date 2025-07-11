@@ -79,12 +79,12 @@ const SignUp = ({ onBack, onSignInClick }: SignUpProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-cyan-100 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-accent/20 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-pink-400 to-purple-600 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
-        <div className="absolute top-40 left-40 w-80 h-80 bg-gradient-to-br from-yellow-400 to-pink-600 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-accent/40 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-40 left-40 w-80 h-80 bg-accent/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
       </div>
 
       <div className="relative z-10 max-w-md mx-auto space-y-6 p-4">
@@ -95,19 +95,19 @@ const SignUp = ({ onBack, onSignInClick }: SignUpProps) => {
           <p className="text-gray-600 text-sm">Start your style transformation today ✨</p>
         </div>
 
-        <Card className="shadow-2xl bg-white/80 backdrop-blur-xl border border-white/30">
+        <Card className="shadow-2xl bg-card/80 backdrop-blur-xl border border-border/30">
           <CardHeader className="text-center">
             <CardTitle className="flex items-center justify-center gap-2">
               <div className="relative">
-                <Star className="w-6 h-6 text-yellow-500 animate-pulse" />
-                <Heart className="w-3 h-3 absolute -top-1 -right-1 text-pink-500 animate-bounce" />
+                <Star className="w-6 h-6 text-accent animate-pulse" />
+                <Heart className="w-3 h-3 absolute -top-1 -right-1 text-primary animate-bounce" />
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              <span className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 Create Account
               </span>
             </CardTitle>
             <CardDescription>
-              Join thousands of style enthusiasts on GRWMe and discover your perfect look
+              Join thousands of style enthusiasts on StyleWise and discover your perfect look
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -178,7 +178,7 @@ const SignUp = ({ onBack, onSignInClick }: SignUpProps) => {
 
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-600 hover:from-purple-700 hover:via-pink-700 hover:to-cyan-700 text-white py-6 text-lg font-bold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 relative overflow-hidden group"
+                className="w-full btn-hover bg-primary hover:bg-primary/90 py-6 text-lg font-bold shadow-xl hover:shadow-2xl relative overflow-hidden group"
                 disabled={isLoading}
               >
                 <div className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>

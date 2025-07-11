@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import SkinAnalysis from "@/components/SkinAnalysis";
 import OutfitSelector from "@/components/OutfitSelector";
-import OutfitStyleSelector from "@/components/OutfitStyleSelector";
+import EnhancedStyleSelector from "@/components/style/EnhancedStyleSelector";
 import OutfitRecommendations from "@/components/OutfitRecommendations";
 import ShoppingRecommendations from "@/components/ShoppingRecommendations";
 import WardrobeManager from "@/components/WardrobeManager";
