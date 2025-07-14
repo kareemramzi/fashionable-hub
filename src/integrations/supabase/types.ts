@@ -218,6 +218,24 @@ export type Database = {
         }
         Relationships: []
       }
+      users: {
+        Row: {
+          id: number
+          password: string
+          username: string
+        }
+        Insert: {
+          id?: number
+          password: string
+          username: string
+        }
+        Update: {
+          id?: number
+          password?: string
+          username?: string
+        }
+        Relationships: []
+      }
       wardrobe_items: {
         Row: {
           created_at: string
@@ -243,28 +261,11 @@ export type Database = {
           size?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "wardrobe_items_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
-      user_roles_view: {
-        Row: {
-          email: string | null
-          profile_created_at: string | null
-          role: Database["public"]["Enums"]["user_role"] | null
-          skin_tone: string | null
-          user_created_at: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       make_user_admin: {

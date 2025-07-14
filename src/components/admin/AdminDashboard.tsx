@@ -32,16 +32,15 @@ const AdminDashboard = ({ onBack, onFavorites, onCart, onProfile }: AdminDashboa
         supabase.from('cart_items').select('id', { count: 'exact' })
       ]);
 
-      // Get total registered users from auth (this requires a view or function)
-      // For now, we'll use a workaround by counting from user_roles_view
-      const { data: totalUsersData, error: totalUsersError } = await supabase
-        .from('user_roles_view')
-        .select('email', { count: 'exact' });
+      // Get total registered users from user_profiles table
+      const { count: totalUsersCount, error: totalUsersError } = await supabase
+        .from('user_profiles')
+        .select('*', { count: 'exact', head: true });
 
-      console.log('Total users query result:', { totalUsersData, totalUsersError, count: totalUsersData?.length });
+      console.log('Total users query result:', { totalUsersCount, totalUsersError });
 
       const activeUsers = profilesResult.count || 0;
-      const totalUsers = totalUsersData?.length || 0;
+      const totalUsers = totalUsersCount || 0;
 
       return {
         totalProducts: productsResult.count || 0,

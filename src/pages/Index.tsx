@@ -336,7 +336,7 @@ const Index = () => {
       case "styleSelector":
         console.log('Index - Rendering styleSelector with skin data:', currentSkinData);
         return (
-          <OutfitStyleSelector
+          <EnhancedStyleSelector
             skinTone={currentSkinData?.skinTone || ""}
             colorPalette={currentSkinData?.palette || []}
             onStyleSelected={handleStyleSelected}
